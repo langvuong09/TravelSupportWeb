@@ -1,0 +1,15 @@
+# Spring Boot
+/backend/target/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+/backend/.mvn/wrapper/maven-wrapper.jar
+
+# React
+/frontend/node_modules/
+/frontend/build/
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
