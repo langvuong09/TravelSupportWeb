@@ -1,11 +1,11 @@
 import { useAuth } from "../../context/AuthContext";
-import { getBookingsByUser, getTour, getLocation, getLocationDetail, formatPrice } from "../../data/mockData";
+import { getBookingsByUser, getTour, getLocationsByTour, getTourThumbnail, formatPrice } from "../../data/mockData";
 import { StatusBadge, EmptyState, Ic } from "../../components/UI";
 import { Link } from "react-router-dom";
 
 export default function MyBookings() {
-  const { user } = useAuth();
-  const bookings = getBookingsByUser(user.userId);
+  const { user }   = useAuth();
+  const bookings   = getBookingsByUser(user.userId);
 
   return (
     <div className="page-wrap">
@@ -16,12 +16,10 @@ export default function MyBookings() {
         <EmptyState emoji="📋" title="Chưa có đơn đặt nào" desc="Khám phá và đặt tour ngay hôm nay!" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {bookings.map(b => {
-            const tour   = getTour(b.tourId);
-            const loc    = getLocation(tour?.locationId);
-            const detail = getLocationDetail(tour?.locationId);
-            const nights = tour ? Math.max(0, Math.round((new Date(tour.endDate) - new Date(tour.startDate)) / 86400000)) : 0;
-            const duration = nights === 0 ? "1 ngày" : `${nights + 1}N${nights}Đ`;
+          {bookings.map((b) => {
+            const tour      = getTour(b.tourId);
+            const locations = tour ? getLocationsByTour(tour.tourId) : [];
+            const thumbnail = tour ? getTourThumbnail(tour.tourId) : null;
 
             return (
               <div key={b.id} style={{
@@ -31,24 +29,32 @@ export default function MyBookings() {
                 boxShadow: "var(--shadow-sm)",
               }}>
                 <div style={{ overflow: "hidden" }}>
-                  <img src={detail?.image} alt={tour?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={thumbnail} alt={tour?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ padding: "22px 26px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>{tour?.name}</h3>
+                    <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>{tour?.name || "Tour không xác định"}</h3>
                     <StatusBadge status={b.status} />
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>
-                    <Ic.Pin /> {loc?.name}, {loc?.province}
-                  </div>
+                  {locations.length > 0 && (
+                    <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                      {locations.slice(0, 3).map((loc) => (
+                        <span key={loc.locationId} style={{
+                          background: "var(--primary-light)", color: "var(--primary)",
+                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+                        }}>
+                          {loc.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 16 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 16 }}>
                     {[
-                      ["Ngày đặt",   b.bookingDate],
-                      ["Khởi hành",  tour?.startDate || "—"],
-                      ["Số người",   `${b.numberOfPeople} người`],
-                      ["Thời gian",  duration],
+                      ["Mã tour",   b.tourId],
+                      ["Ngày đặt",  b.bookingDate],
+                      ["Số người",  `${b.numberOfPeople} người`],
                     ].map(([l, v]) => (
                       <div key={l}>
                         <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 2 }}>{l}</div>
@@ -71,7 +77,9 @@ export default function MyBookings() {
                       {b.status === "pending" && (
                         <button className="btn btn-danger btn-sm">Huỷ đặt</button>
                       )}
-                      <Link to={`/tours/${b.tourId}`} className="btn btn-outline btn-sm">Xem tour</Link>
+                      {tour && (
+                        <Link to={`/tours/${b.tourId}`} className="btn btn-outline btn-sm">Xem tour</Link>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -1,12 +1,19 @@
 import { Link } from "react-router-dom";
-import { Ic, StarRating } from "./UI";
-import { formatPrice, avgRating, mockTours } from "../data/mockData";
+import { Ic } from "./UI";
+import { formatPrice, getProvince, getToursByLocation, avgRating } from "../data/mockData";
 
-export default function LocationCard({ location, detail }) {
-  const toursCount = mockTours.filter((t) => t.locationId === location.locationId).length;
-  const rating = avgRating(
-    mockTours.find((t) => t.locationId === location.locationId)?.tourId
-  );
+export default function LocationCard({ location }) {
+  const province = getProvince(location.provinceId);
+  const tours    = getToursByLocation(location.locationId);
+
+  // Rating trung bình của tất cả tours có location này
+  const allRatings = tours.flatMap((t) => {
+    const r = Number(avgRating(t.tourId));
+    return r > 0 ? [r] : [];
+  });
+  const rating = allRatings.length
+    ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1)
+    : null;
 
   return (
     <Link
@@ -17,11 +24,11 @@ export default function LocationCard({ location, detail }) {
       {/* Image */}
       <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
         <img
-          src={detail.image}
+          src={location.image}
           alt={location.name}
           style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
-          onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-          onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         />
         <div style={{
           position: "absolute", top: 12, left: 12,
@@ -29,22 +36,23 @@ export default function LocationCard({ location, detail }) {
           borderRadius: 20, padding: "4px 10px",
           color: "#fff", fontSize: 12, fontWeight: 600,
         }}>
-          Miền {location.region}
+          {location.type}
         </div>
-        <div style={{
-          position: "absolute", top: 12, right: 12,
-          background: "rgba(245,158,11,0.9)", borderRadius: 8,
-          padding: "4px 10px", color: "#fff", fontSize: 12, fontWeight: 700,
-          display: "flex", alignItems: "center", gap: 4,
-        }}>
-          ★ {rating || "Mới"}
-        </div>
+        {rating && (
+          <div style={{
+            position: "absolute", top: 12, right: 12,
+            background: "rgba(245,158,11,0.9)", borderRadius: 8,
+            padding: "4px 10px", color: "#fff", fontSize: 12, fontWeight: 700,
+          }}>
+            ★ {rating}
+          </div>
+        )}
       </div>
 
       {/* Content */}
       <div style={{ padding: "16px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--text-muted)", fontSize: 12, marginBottom: 6 }}>
-          <Ic.Pin /> {location.province}
+          <Ic.Pin /> {province?.name || "Việt Nam"}
         </div>
         <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)", marginBottom: 8, lineHeight: 1.3 }}>
           {location.name}
@@ -53,16 +61,16 @@ export default function LocationCard({ location, detail }) {
           fontSize: 13, color: "var(--text-muted)", lineHeight: 1.65, marginBottom: 14,
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
         }}>
-          {detail.description}
+          {location.description}
         </p>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-light)", paddingTop: 12 }}>
           <div>
             <div style={{ fontSize: 11, color: "var(--text-light)" }}>Thời điểm lý tưởng</div>
-            <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{detail.bestTimeToVisit}</div>
+            <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{location.bestTimeToVisit}</div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: "var(--text-light)" }}>Từ</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)" }}>{formatPrice(detail.price)}</div>
+            <div style={{ fontSize: 11, color: "var(--text-light)" }}>Chi phí từ</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)" }}>{formatPrice(location.estimatedCost)}</div>
           </div>
         </div>
       </div>

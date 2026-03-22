@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { mockLocations, mockLocationDetails } from "../../data/mockData";
+import { mockLocations, mockProvinces } from "../../data/mockData";
 import LocationCard from "../../components/LocationCard";
 import { Ic, EmptyState } from "../../components/UI";
 
-const REGIONS = ["Tất cả", "Bắc", "Trung", "Nam"];
+const TYPES = ["Tất cả", "Thiên nhiên", "Văn hóa", "Biển đảo", "Nghỉ dưỡng", "Giải trí"];
 
 export default function Locations() {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
-  const [region, setRegion] = useState("Tất cả");
+  const [type, setType]     = useState("Tất cả");
+  const [province, setProvince] = useState("Tất cả");
 
-  const filtered = mockLocations.filter(loc => {
-    const matchRegion = region === "Tất cả" || loc.region === region;
-    const matchSearch =
+  const filtered = mockLocations.filter((loc) => {
+    const prov = mockProvinces.find((p) => p.provinceId === loc.provinceId);
+    const matchType     = type === "Tất cả" || loc.type === type;
+    const matchProvince = province === "Tất cả" || prov?.name === province;
+    const matchSearch   =
       loc.name.toLowerCase().includes(search.toLowerCase()) ||
-      loc.province.toLowerCase().includes(search.toLowerCase());
-    return matchRegion && matchSearch;
+      prov?.name.toLowerCase().includes(search.toLowerCase());
+    return matchType && matchProvince && matchSearch;
   });
 
   return (
@@ -36,7 +39,7 @@ export default function Locations() {
             <Ic.Search />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Tên địa điểm, tỉnh thành..."
               style={{ border: "none", outline: "none", flex: 1, fontSize: 14 }}
             />
@@ -45,22 +48,31 @@ export default function Locations() {
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 6 }}>
-            {REGIONS.map(r => (
-              <button
-                key={r}
-                onClick={() => setRegion(r)}
-                className="btn btn-sm"
-                style={{
-                  background: region === r ? "var(--primary)" : "#fff",
-                  color: region === r ? "#fff" : "var(--text-muted)",
-                  border: "1.5px solid " + (region === r ? "var(--primary)" : "var(--border)"),
-                }}
-              >
-                {r === "Tất cả" ? r : `Miền ${r}`}
+          {/* Type filter */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {TYPES.map((t) => (
+              <button key={t} onClick={() => setType(t)} className="btn btn-sm" style={{
+                background: type === t ? "var(--primary)" : "#fff",
+                color:      type === t ? "#fff" : "var(--text-muted)",
+                border: "1.5px solid " + (type === t ? "var(--primary)" : "var(--border)"),
+              }}>
+                {t}
               </button>
             ))}
           </div>
+
+          {/* Province select */}
+          <select
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+            className="input-field"
+            style={{ width: "auto", padding: "9px 14px" }}
+          >
+            <option value="Tất cả">Tất cả tỉnh thành</option>
+            {mockProvinces.map((p) => (
+              <option key={p.provinceId} value={p.name}>{p.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -73,14 +85,11 @@ export default function Locations() {
         <EmptyState emoji="🗺️" title="Không tìm thấy địa điểm" desc="Thử thay đổi từ khoá hoặc bộ lọc" />
       ) : (
         <div className="grid-3 stagger">
-          {filtered.map(loc => {
-            const detail = mockLocationDetails.find(d => d.locationId === loc.locationId);
-            return detail ? (
-              <div key={loc.locationId} className="anim-fadeUp">
-                <LocationCard location={loc} detail={detail} />
-              </div>
-            ) : null;
-          })}
+          {filtered.map((loc) => (
+            <div key={loc.locationId} className="anim-fadeUp">
+              <LocationCard location={loc} />
+            </div>
+          ))}
         </div>
       )}
     </div>

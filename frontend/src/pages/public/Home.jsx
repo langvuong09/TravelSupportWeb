@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { mockLocations, mockLocationDetails, mockTours, mockReviews, formatPrice } from "../../data/mockData";
+import {
+  mockLocations, mockTours, mockReviews,
+  formatPrice, getProvincesByTour, getLocationsByTour,
+  getTourThumbnail, getTourEstimatedCost, getUserById, getFullName, avgRating,
+} from "../../data/mockData";
 import LocationCard from "../../components/LocationCard";
 import TourCard from "../../components/TourCard";
 import { Ic, StarRating } from "../../components/UI";
 import "./Home.css";
 
 const STATS = [
-  { emoji: "🗺️", value: "8+",    label: "Địa điểm nổi bật" },
-  { emoji: "🏕️", value: "20+",   label: "Tour du lịch" },
+  { emoji: "🗺️", value: "9+",    label: "Địa điểm nổi bật" },
+  { emoji: "🏕️", value: "7+",   label: "Tour du lịch" },
   { emoji: "👥", value: "1,200+", label: "Khách hàng" },
-  { emoji: "⭐", value: "4.8",    label: "Đánh giá trung bình" },
+  { emoji: "⭐", value: "4.7",    label: "Đánh giá trung bình" },
 ];
 
 export default function Home() {
@@ -25,12 +29,6 @@ export default function Home() {
   const featuredLocations = mockLocations.slice(0, 6);
   const featuredTours     = mockTours.slice(0, 3);
   const recentReviews     = mockReviews.slice(0, 3);
-
-  const getUserName = (userId) => {
-    const users = { 2: "Nguyễn Thị Lan", 3: "Trần Văn Minh", 4: "Lê Thu Hương" };
-    return users[userId] || "Khách hàng";
-  };
-  const getTourName = (tourId) => mockTours.find(t => t.tourId === tourId)?.name || "";
 
   return (
     <div className="home">
@@ -49,20 +47,18 @@ export default function Home() {
             Tìm kiếm, khám phá và đặt tour đến hàng trăm địa điểm du lịch tuyệt đẹp trên khắp Việt Nam
           </p>
 
-          {/* Search bar */}
           <form className="hero-search anim-fadeUp" style={{ animationDelay: "0.3s" }} onSubmit={handleSearch}>
             <Ic.Search />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm địa điểm, tỉnh thành, tour..."
             />
             <button type="submit" className="btn btn-primary">Tìm kiếm</button>
           </form>
 
-          {/* Quick tags */}
           <div className="hero-tags anim-fadeUp" style={{ animationDelay: "0.4s" }}>
-            {["Hạ Long", "Hội An", "Đà Lạt", "Sapa", "Phú Quốc"].map(tag => (
+            {["Hạ Long", "Hội An", "Đà Lạt", "Sapa", "Phú Quốc"].map((tag) => (
               <button key={tag} onClick={() => nav(`/locations?q=${tag}`)} className="hero-tag">
                 {tag}
               </button>
@@ -75,7 +71,7 @@ export default function Home() {
       <section className="stats-section">
         <div className="container">
           <div className="stats-grid stagger">
-            {STATS.map(s => (
+            {STATS.map((s) => (
               <div key={s.label} className="stat-card anim-fadeUp">
                 <div className="stat-emoji">{s.emoji}</div>
                 <div className="stat-value">{s.value}</div>
@@ -96,14 +92,11 @@ export default function Home() {
           <Link to="/locations" className="btn btn-outline btn-sm">Xem tất cả <Ic.Arrow /></Link>
         </div>
         <div className="grid-3 stagger">
-          {featuredLocations.map(loc => {
-            const detail = mockLocationDetails.find(d => d.locationId === loc.locationId);
-            return detail ? (
-              <div key={loc.locationId} className="anim-fadeUp">
-                <LocationCard location={loc} detail={detail} />
-              </div>
-            ) : null;
-          })}
+          {featuredLocations.map((loc) => (
+            <div key={loc.locationId} className="anim-fadeUp">
+              <LocationCard location={loc} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -118,7 +111,7 @@ export default function Home() {
             <Link to="/tours" className="btn btn-outline btn-sm">Xem tất cả <Ic.Arrow /></Link>
           </div>
           <div className="grid-3 stagger">
-            {featuredTours.map(tour => (
+            {featuredTours.map((tour) => (
               <div key={tour.tourId} className="anim-fadeUp">
                 <TourCard tour={tour} />
               </div>
@@ -134,22 +127,28 @@ export default function Home() {
           <p className="section-sub">Đánh giá thật từ những chuyến đi thật</p>
         </div>
         <div className="reviews-grid stagger">
-          {recentReviews.map(r => (
-            <div key={r.id} className="review-card card anim-fadeUp">
-              <div className="review-header">
-                <div className="review-avatar">{getUserName(r.userId)[0]}</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{getUserName(r.userId)}</div>
-                  <StarRating rating={r.rating} size={13} />
+          {recentReviews.map((r) => {
+            const u    = getUserById(r.userId);
+            const name = getFullName(u);
+            // Lấy tên tour từ tourId
+            const tourName = mockTours.find((t) => t.tourId === r.tourId)?.name || "";
+            return (
+              <div key={r.id} className="review-card card anim-fadeUp">
+                <div className="review-header">
+                  <div className="review-avatar">{name[0]}</div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{name}</div>
+                    <StarRating rating={r.rating} size={13} />
+                  </div>
+                  <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-light)" }}>{r.createdAt}</div>
                 </div>
-                <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-light)" }}>{r.createdAt}</div>
+                <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 600, marginBottom: 8 }}>
+                  🏕️ {tourName}
+                </div>
+                <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{r.comment}</p>
               </div>
-              <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 600, marginBottom: 8 }}>
-                🏕️ {getTourName(r.tourId)}
-              </div>
-              <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{r.comment}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

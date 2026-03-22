@@ -1,10 +1,10 @@
 import { createContext, useContext, useState } from "react";
-import { mockUsers } from "../data/mockData";
+import { mockUsers, getFullName } from "../data/mockData";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // null = chưa đăng nhập
+  const [user, setUser] = useState(null);
 
   const login = (username, password) => {
     const found = mockUsers.find(
@@ -12,8 +12,10 @@ export function AuthProvider({ children }) {
     );
     if (found) {
       const { password: _, ...safe } = found;
-      setUser(safe);
-      return { success: true, user: safe };
+      // Thêm fullName tiện dùng trong UI
+      const userWithFullName = { ...safe, fullName: getFullName(safe) };
+      setUser(userWithFullName);
+      return { success: true, user: userWithFullName };
     }
     return { success: false, message: "Sai tên đăng nhập hoặc mật khẩu!" };
   };
