@@ -24,10 +24,10 @@ export default function MyBookings() {
   return (
     <div className="page-wrap">
       <h1 className="page-title">Đặt tour của tôi</h1>
-      <p className="page-subtitle">Quản lý tất cả các đơn đặt tour</p>
+      <p className="page-subtitle">Quản lý tất cả các tour</p>
 
       {bookings.length === 0 ? (
-        <EmptyState emoji="📋" title="Chưa có đơn đặt nào" desc="Tạo tour tùy chỉnh và khám phá ngay!" />
+        <EmptyState emoji="📋" title="Chưa có tour nào" desc="Tạo tour tùy chỉnh và khám phá ngay!" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           {bookings.map((b) => (
@@ -74,7 +74,7 @@ export default function MyBookings() {
                     setShowDeleteConfirm(true);
                   }}
                 >
-                  Hủy đặt
+                  Hủy tour
                 </button>
                 <button 
                   className="btn btn-outline btn-sm"
