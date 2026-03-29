@@ -21,7 +21,7 @@ export function BookingProvider({ children }) {
     const newBooking = {
       id: `b-${Date.now()}`,
       bookingDate: new Date().toISOString().split("T")[0],
-      status: "pending",
+      status: "confirmed", // ← Trực tiếp confirmed, không cần duyệt
       ...booking,
     };
     setBookings((prev) => [...prev, newBooking]);

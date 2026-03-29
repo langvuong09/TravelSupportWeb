@@ -12,19 +12,37 @@ import "../../styles/global.css";
 
 // ── Khoảng cách ước lượng giữa các tỉnh (km) ─────────────────
 const PROVINCE_DISTANCES = {
-  "1-2": 1150, "1-3": 1650, "1-4": 320, "1-5": 1950, "1-6": 1600,
-  "1-7": 130,  "1-8": 670,  "1-9": 760, "1-10": 170,
-  "2-3": 850,  "2-4": 1200, "2-5": 1000,"2-6": 700,  "2-7": 1100,
-  "2-8": 120,  "2-9": 30,   "2-10": 900,
-  "3-4": 1450, "3-5": 280,  "3-6": 200, "3-7": 1100, "3-8": 1000,
-  "3-9": 980,  "3-10": 1500,
-  "4-5": 2200, "4-6": 1900, "4-7": 380, "4-8": 860,  "4-9": 950,
-  "4-10": 320,
-  "5-6": 250,  "5-7": 1800, "5-8": 1700,"5-9": 1600, "5-10": 2100,
-  "6-7": 1450, "6-8": 1300, "6-9": 1200,"6-10": 1700,
-  "7-8": 620,  "7-9": 720,  "7-10": 95,
-  "8-9": 100,  "8-10": 660,
-  "9-10": 760,
+  "1-2": 350,   "1-3": 1200,  "1-4": 1400, "1-5": 800,   "1-6": 450,
+  "1-7": 600,   "1-8": 1100,  "1-9": 900,  "1-10": 950,  "1-11": 300,
+  "1-12": 1300, "1-13": 1500, "1-14": 1100,"1-15": 1200, "1-16": 1150,
+  "1-17": 450,  "1-18": 250,  "1-19": 850, "1-20": 1250, "1-21": 700,
+  "1-22": 1050, "1-23": 950,  "1-24": 1100,"1-25": 1200, "1-26": 950,
+  "1-27": 900,  "1-28": 1350, "1-29": 350, "1-30": 1100, "1-31": 1200,
+  "1-32": 1000,
+  "2-3": 1100,  "2-4": 1300,  "2-5": 700,  "2-6": 400,   "2-7": 550,
+  "2-8": 1000,  "2-9": 800,   "2-10": 900, "2-11": 300,  "2-12": 1200,
+  "2-13": 1400, "2-14": 1000, "2-15": 1100,"2-16": 1050, "2-17": 350,
+  "2-18": 200,  "2-19": 750,  "2-20": 1150,"2-21": 600,  "2-22": 950,
+  "2-23": 850,  "2-24": 1000, "2-25": 1100,"2-26": 900,  "2-27": 850,
+  "2-28": 1250, "2-29": 400,  "2-30": 1000,"2-31": 1100, "2-32": 900,
+  "3-4": 1000,  "3-5": 600,   "3-6": 800,  "3-7": 1200,  "3-8": 500,
+  "3-9": 700,   "3-10": 900,  "3-11": 800, "3-12": 1100, "3-13": 1200,
+  "3-14": 900,  "3-15": 1000, "3-16": 950, "3-17": 600,  "3-18": 850,
+  "3-19": 950,  "3-20": 1350, "3-21": 800, "3-22": 1100, "3-23": 1000,
+  "3-24": 700,  "3-25": 850,  "3-26": 1050,"3-27": 750,  "3-28": 1100,
+  "3-29": 900,  "3-30": 1300, "3-31": 1200,"3-32": 800,
+  "4-5": 500,   "4-6": 1000,  "4-7": 1400, "4-8": 800,   "4-9": 900,
+  "4-10": 1100, "4-11": 900,  "4-12": 900, "4-13": 1300, "4-14": 1200,
+  "4-15": 1100, "4-16": 300,  "4-17": 1000,"4-18": 1200, "4-19": 1100,
+  "4-20": 200,  "4-21": 1000, "4-22": 1400,"4-23": 1300, "4-24": 1100,
+  "4-25": 1000, "4-26": 1200, "4-27": 1100,"4-28": 1500, "4-29": 1200,
+  "4-30": 1400, "4-31": 200,  "4-32": 1000,
+  "5-6": 700,   "5-7": 1100,  "5-8": 400,  "5-9": 600,   "5-10": 800,
+  "5-11": 700,  "5-12": 1000, "5-13": 1100,"5-14": 800,  "5-15": 900,
+  "5-16": 900,  "5-17": 300,  "5-18": 500, "5-19": 700,  "5-20": 1200,
+  "5-21": 500,  "5-22": 900,  "5-23": 800, "5-24": 600,  "5-25": 750,
+  "5-26": 800,  "5-27": 500,  "5-28": 1000,"5-29": 800,  "5-30": 1200,
+  "5-31": 1100, "5-32": 700,
 };
 
 function getDist(a, b) {
@@ -40,14 +58,13 @@ function StepBadge({ n, active }) {
 }
 
 // ── Province chip ──────────────────────────────────────────────
-function ProvChip({ province, order, selected, onClick }) {
+function ProvChip({ province, selected, onClick }) {
   return (
     <button
       className={`prov-chip ${selected ? "selected" : ""}`}
       onClick={onClick}
       type="button"
     >
-      {selected && <span className="prov-order">{order}</span>}
       {province.name}
     </button>
   );
@@ -168,6 +185,7 @@ export default function CreateTour() {
   const { addBooking } = useBooking();
 
   const [selProvinces, setSelProvinces] = useState([]); // [provinceId, ...]
+  const [searchTerm, setSearchTerm]      = useState(""); // ← Search for provinces
   const [people, setPeople]             = useState(1);
   const [selLocs, setSelLocs]           = useState({}); // {pid: [locId,...]}
   const [selFoods, setSelFoods]         = useState({}); // {pid: [foodId,...]}
@@ -176,6 +194,12 @@ export default function CreateTour() {
   const [showSuccess, setShowSuccess]   = useState(false);
 
   // ── Dữ liệu theo tỉnh đã chọn ───────────────────────────────
+  const filteredProvinces = useMemo(() => {
+    if (!searchTerm.trim()) return mockProvinces;
+    const term = searchTerm.toLowerCase();
+    return mockProvinces.filter((p) => p.name.toLowerCase().includes(term));
+  }, [searchTerm]);
+
   const locsByProv  = useMemo(() => {
     const map = {};
     selProvinces.forEach((pid) => {
@@ -405,22 +429,47 @@ export default function CreateTour() {
           <div className="ct-card">
             <div className="ct-card-header">
               <StepBadge n="1" active={selProvinces.length > 0} />
-              <span className="ct-card-title">Chọn tỉnh / thành phố <span className="ct-hint">(theo thứ tự chuyến đi)</span></span>
+              <span className="ct-card-title">Chọn tỉnh / thành phố</span>
             </div>
+            
+            {/* Search bar */}
+            <input
+              type="text"
+              placeholder="🔍 Tìm kiếm tỉnh thành..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                marginBottom: "16px",
+                border: "1.5px solid var(--border)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: "14px",
+                fontFamily: "var(--font)",
+                backgroundColor: "var(--bg-white)",
+                color: "var(--text)",
+                transition: "var(--transition)"
+              }}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--primary)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            />
+            
             <div className="province-grid">
-              {mockProvinces.map((p) => {
-                const order = selProvinces.indexOf(p.provinceId);
+              {filteredProvinces.map((p) => {
                 return (
                   <ProvChip
                     key={p.provinceId}
                     province={p}
-                    order={order + 1}
-                    selected={order >= 0}
+                    selected={selProvinces.includes(p.provinceId)}
                     onClick={() => toggleProvince(p.provinceId)}
                   />
                 );
               })}
             </div>
+            
+            {filteredProvinces.length === 0 && (
+              <p className="ct-empty">Không tìm thấy tỉnh thành nào khớp với từ khóa "{searchTerm}"</p>
+            )}
           </div>
 
           {/* Step 2: Số người */}
@@ -472,15 +521,54 @@ export default function CreateTour() {
                     {locs.length > 0 && (
                       <>
                         <p className="sub-label">📍 Địa điểm tham quan</p>
-                        <div className="pill-wrap">
+                        <div className="locations-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "12px", marginBottom: "16px" }}>
                           {locs.map((l) => (
-                            <ItemPill
+                            <button
                               key={l.locationId}
-                              label={l.name}
-                              sub={formatPrice(l.estimatedCost)}
-                              selected={sLocs.includes(l.locationId)}
                               onClick={() => toggleLoc(pid, l.locationId)}
-                            />
+                              style={{
+                                border: sLocs.includes(l.locationId) ? "2px solid var(--primary)" : "1.5px solid var(--border)",
+                                borderRadius: "var(--radius-sm)",
+                                overflow: "hidden",
+                                cursor: "pointer",
+                                background: "var(--bg-white)",
+                                transition: "var(--transition)",
+                                padding: 0,
+                                display: "flex",
+                                flexDirection: "column",
+                                textAlign: "left",
+                                fontFamily: "var(--font)"
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                              }}
+                            >
+                              {l.image && (
+                                <img
+                                  src={l.image}
+                                  alt={l.name}
+                                  style={{
+                                    width: "100%",
+                                    height: "100px",
+                                    objectFit: "cover",
+                                    backgroundColor: "var(--border-light)"
+                                  }}
+                                />
+                              )}
+                              <div style={{ padding: "10px", flex: 1, display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text)", marginBottom: "4px", lineHeight: "1.3" }}>
+                                  {l.name}
+                                </span>
+                                <span style={{ fontSize: "12px", color: "var(--primary)", fontWeight: 700, marginTop: "auto" }}>
+                                  {formatPrice(l.estimatedCost)}
+                                </span>
+                              </div>
+                            </button>
                           ))}
                         </div>
                       </>

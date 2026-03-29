@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useBooking } from "../../context/BookingContext";
-import { StatusBadge, EmptyState } from "../../components/UI";
+import { EmptyState } from "../../components/UI";
 import BookingDetail from "./BookingDetail";
 
 export default function MyBookings() {
   const { user } = useAuth();
-  const { getBookingsByUser, deleteBooking, updateBooking } = useBooking();
+  const { getBookingsByUser, deleteBooking } = useBooking();
   const bookings = getBookingsByUser(user.userId);
   
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const formatPrice = (num) =>
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
   const handleDeleteBooking = () => {
     deleteBooking(selectedBooking.id);
@@ -40,15 +43,16 @@ export default function MyBookings() {
                   </h3>
                   <p style={{ fontSize: 13, color: "var(--text-muted)" }}>ID: {b.tourId}</p>
                 </div>
-                <StatusBadge status={b.status} />
+                <div style={{ background: "#dbeafe", color: "#0284c7", padding: "6px 12px", borderRadius: "var(--radius-sm)", fontSize: "12px", fontWeight: 700 }}>
+                  ✓ Đã xác nhận
+                </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 16, padding: "12px 0", borderTop: "1px solid var(--border-light)", borderBottom: "1px solid var(--border-light)" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 16, padding: "12px 0", borderTop: "1px solid var(--border-light)", borderBottom: "1px solid var(--border-light)" }}>
                 {[
                   ["Ngày đặt", b.bookingDate],
                   ["Số người", `${b.numberOfPeople} người`],
                   ["Tổng tiền", formatPrice(b.totalPrice)],
-                  ["Trạng thái", b.status === "pending" ? "Chờ xác nhận" : b.status === "confirmed" ? "Đã xác nhận" : "Hoàn thành"],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 4, fontWeight: 600 }}>{label}</div>
@@ -63,17 +67,15 @@ export default function MyBookings() {
                     Viết đánh giá
                   </button>
                 )}
-                {b.status === "pending" && (
-                  <button 
-                    className="btn btn-danger btn-sm"
-                    onClick={() => {
-                      setSelectedBooking(b);
-                      setShowDeleteConfirm(true);
-                    }}
-                  >
-                    Hủy đặt
-                  </button>
-                )}
+                <button 
+                  className="btn btn-danger btn-sm"
+                  onClick={() => {
+                    setSelectedBooking(b);
+                    setShowDeleteConfirm(true);
+                  }}
+                >
+                  Hủy đặt
+                </button>
                 <button 
                   className="btn btn-outline btn-sm"
                   onClick={() => setSelectedBooking(b)}

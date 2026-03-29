@@ -1,6 +1,8 @@
-import { StatusBadge } from "../../components/UI";
+import { useState } from "react";
 
 export default function BookingDetail({ booking, onClose, onCancel }) {
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  
   const formatPrice = (num) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
@@ -69,10 +71,10 @@ export default function BookingDetail({ booking, onClose, onCancel }) {
         </div>
 
         {/* Thông tin cơ bản */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
           <div style={{ padding: "12px 14px", background: "var(--bg)", borderRadius: "var(--radius-sm)" }}>
             <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 4, fontWeight: 600 }}>
-              Ngày đặt
+              Ngày tạo
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{booking.bookingDate}</div>
           </div>
@@ -91,12 +93,6 @@ export default function BookingDetail({ booking, onClose, onCancel }) {
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--primary)" }}>
               {formatPrice(booking.totalPrice)}
             </div>
-          </div>
-          <div style={{ padding: "12px 14px", background: "var(--bg)", borderRadius: "var(--radius-sm)" }}>
-            <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 4, fontWeight: 600 }}>
-              Trạng thái
-            </div>
-            <StatusBadge status={booking.status} />
           </div>
         </div>
 
@@ -312,11 +308,6 @@ export default function BookingDetail({ booking, onClose, onCancel }) {
           <button onClick={onClose} className="btn btn-outline btn-sm">
             Đóng
           </button>
-          {booking.status === "pending" && onCancel && (
-            <button onClick={onCancel} className="btn btn-danger btn-sm">
-              Hủy đặt
-            </button>
-          )}
         </div>
       </div>
     </>

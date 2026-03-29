@@ -15,18 +15,40 @@ export const mockUsers = [
 export const getFullName = (user) =>
   user ? `${user.firstName} ${user.lastName}`.trim() : "Khách hàng";
 
-// TABLE: provinces
+// TABLE: provinces (32 tỉnh thành)
 export const mockProvinces = [
-  { provinceId: 1,  name: "Quảng Ninh" },
-  { provinceId: 2,  name: "Quảng Nam" },
-  { provinceId: 3,  name: "Lâm Đồng" },
-  { provinceId: 4,  name: "Lào Cai" },
-  { provinceId: 5,  name: "Kiên Giang" },
-  { provinceId: 6,  name: "Bình Thuận" },
-  { provinceId: 7,  name: "Ninh Bình" },
-  { provinceId: 8,  name: "Thừa Thiên Huế" },
-  { provinceId: 9,  name: "Đà Nẵng" },
-  { provinceId: 10, name: "Hà Nội" },
+  { provinceId: 1,  name: "An Giang" },
+  { provinceId: 2,  name: "Bà Rịa - Vũng Tàu" },
+  { provinceId: 3,  name: "Bắc Giang" },
+  { provinceId: 4,  name: "Bắc Kạn" },
+  { provinceId: 5,  name: "Bắc Ninh" },
+  { provinceId: 6,  name: "Bến Tre" },
+  { provinceId: 7,  name: "Bình Định" },
+  { provinceId: 8,  name: "Bình Dương" },
+  { provinceId: 9,  name: "Bình Phước" },
+  { provinceId: 10, name: "Bình Thuận" },
+  { provinceId: 11, name: "Cà Mau" },
+  { provinceId: 12, name: "Cao Bằng" },
+  { provinceId: 13, name: "Đà Nẵng" },
+  { provinceId: 14, name: "Đắk Lắk" },
+  { provinceId: 15, name: "Đắk Nông" },
+  { provinceId: 16, name: "Điện Biên" },
+  { provinceId: 17, name: "Đồng Nai" },
+  { provinceId: 18, name: "Đồng Tháp" },
+  { provinceId: 19, name: "Gia Lai" },
+  { provinceId: 20, name: "Hà Giang" },
+  { provinceId: 21, name: "Hà Nam" },
+  { provinceId: 22, name: "Hà Nội" },
+  { provinceId: 23, name: "Hà Tĩnh" },
+  { provinceId: 24, name: "Hải Dương" },
+  { provinceId: 25, name: "Hải Phòng" },
+  { provinceId: 26, name: "Hòa Bình" },
+  { provinceId: 27, name: "Hưng Yên" },
+  { provinceId: 28, name: "Khánh Hòa" },
+  { provinceId: 29, name: "Kiên Giang" },
+  { provinceId: 30, name: "Kon Tum" },
+  { provinceId: 31, name: "Lai Châu" },
+  { provinceId: 32, name: "Lâm Đồng" },
 ];
 
 // TABLE: locations  (gộp located_details vào, thêm lat/long, provinceId)
