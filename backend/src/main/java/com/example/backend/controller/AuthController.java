@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:3000")
+// Cho phép cả localhost:3000 (dev) và bất kỳ origin nào (production)
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
@@ -17,37 +18,55 @@ public class AuthController {
     @PostMapping("/login")
     public Object login(@RequestBody LoginRequest request) {
         var user = authService.authenticate(request.getUsername(), request.getPassword());
-        if (user == null) return Map.of("success", false, "message", "Invalid username or password");
-        // return safe user info (omit password)
+        if (user == null) {
+            return Map.of("success", false, "message", "Sai tên đăng nhập hoặc mật khẩu!");
+        }
         return Map.of(
             "success", true,
             "user", Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "firstName", user.getFirstName(),
-                "lastName", user.getLastName(),
-                "email", user.getEmail(),
-                "role", user.getRole()
+                "id",        user.getId(),
+                "username",  user.getUsername(),
+                "firstName", user.getFirstName() != null ? user.getFirstName() : "",
+                "lastName",  user.getLastName()  != null ? user.getLastName()  : "",
+                "email",     user.getEmail()     != null ? user.getEmail()     : "",
+                "role",      user.getRole()      != null ? user.getRole()      : "USER"
             )
         );
     }
 
     @PostMapping("/register")
     public Object register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-        String fullName = body.get("fullName");
-        String email = body.get("email");
-        String phone = body.get("phone");
+        String username  = body.get("username");
+        String password  = body.get("password");
+        String fullName  = body.get("fullName");
+        String email     = body.get("email");
+        String phone     = body.get("phone");
         String birthDate = body.get("birthDate");
 
-        if (username == null || password == null) return Map.of("error", "username and password required");
+        if (username == null || username.isBlank()) {
+            return Map.of("error", "username_required");
+        }
+        if (password == null || password.isBlank()) {
+            return Map.of("error", "password_required");
+        }
 
-        if (authService.existsByUsername(username)) {
+        if (authService.existsByUsername(username.trim())) {
             return Map.of("error", "username_taken");
         }
 
-        var user = authService.register(username, password, fullName, email, phone, birthDate);
-        return Map.of("success", true, "user", Map.of("id", user.getId(), "username", user.getUsername(), "role", user.getRole()));
+        // Luôn tạo với role USER (không nhận role từ client)
+        var user = authService.register(
+            username.trim(), password,
+            fullName, email, phone, birthDate
+        );
+
+        return Map.of(
+            "success", true,
+            "user", Map.of(
+                "id",       user.getId(),
+                "username", user.getUsername(),
+                "role",     user.getRole()
+            )
+        );
     }
 }

@@ -45,7 +45,7 @@ export default function BookingForm() {
       </p>
       <div style={{ display: "flex", gap: 12 }}>
         <Link to="/my-bookings" className="btn btn-primary">Xem đặt tour của tôi</Link>
-        <Link to="/tours" className="btn btn-outline">Khám phá thêm</Link>
+        <Link to="/create-tour" className="btn btn-outline">Tạo tour mới</Link>
       </div>
     </div>
   );
@@ -54,9 +54,9 @@ export default function BookingForm() {
     <div className="page-wrap">
       {/* Breadcrumb */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, fontSize: 14, color: "var(--text-muted)" }}>
-        <Link to="/tours" style={{ color: "var(--primary)" }}>Tours</Link>
-        <span>›</span>
-        <Link to={`/tours/${tour.tourId}`} style={{ color: "var(--primary)" }}>{tour.name}</Link>
+        <Link to="/create-tour" style={{ color: "var(--primary)" }}>Tours</Link>
+        <span> / </span>
+        <span style={{ color: "var(--primary)", fontWeight: 600 }}>Chuỗi tour</span>
         <span>›</span>
         <span>Đặt tour</span>
       </div>

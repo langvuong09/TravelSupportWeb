@@ -1,11 +1,22 @@
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getBookingsByUser, getTour, getLocationsByTour, getTourThumbnail, formatPrice } from "../../data/mockData";
-import { StatusBadge, EmptyState, Ic } from "../../components/UI";
-import { Link } from "react-router-dom";
+import { useBooking } from "../../context/BookingContext";
+import { StatusBadge, EmptyState } from "../../components/UI";
+import BookingDetail from "./BookingDetail";
 
 export default function MyBookings() {
-  const { user }   = useAuth();
-  const bookings   = getBookingsByUser(user.userId);
+  const { user } = useAuth();
+  const { getBookingsByUser, deleteBooking, updateBooking } = useBooking();
+  const bookings = getBookingsByUser(user.userId);
+  
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeleteBooking = () => {
+    deleteBooking(selectedBooking.id);
+    setShowDeleteConfirm(false);
+    setSelectedBooking(null);
+  };
 
   return (
     <div className="page-wrap">
@@ -13,87 +24,135 @@ export default function MyBookings() {
       <p className="page-subtitle">Quản lý tất cả các đơn đặt tour</p>
 
       {bookings.length === 0 ? (
-        <EmptyState emoji="📋" title="Chưa có đơn đặt nào" desc="Khám phá và đặt tour ngay hôm nay!" />
+        <EmptyState emoji="📋" title="Chưa có đơn đặt nào" desc="Tạo tour tùy chỉnh và khám phá ngay!" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {bookings.map((b) => {
-            const tour      = getTour(b.tourId);
-            const locations = tour ? getLocationsByTour(tour.tourId) : [];
-            const thumbnail = tour ? getTourThumbnail(tour.tourId) : null;
-
-            return (
-              <div key={b.id} style={{
-                background: "#fff", border: "1px solid var(--border)",
-                borderRadius: "var(--radius-xl)", overflow: "hidden",
-                display: "grid", gridTemplateColumns: "200px 1fr",
-                boxShadow: "var(--shadow-sm)",
-              }}>
-                <div style={{ overflow: "hidden" }}>
-                  <img src={thumbnail} alt={tour?.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          {bookings.map((b) => (
+            <div key={b.id} style={{
+              background: "#fff", border: "1px solid var(--border)",
+              borderRadius: "var(--radius-xl)", padding: "22px 26px",
+              boxShadow: "var(--shadow-sm)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                <div>
+                  <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
+                    {b.tourName || "Tour tùy chỉnh"}
+                  </h3>
+                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>ID: {b.tourId}</p>
                 </div>
-                <div style={{ padding: "22px 26px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)" }}>{tour?.name || "Tour không xác định"}</h3>
-                    <StatusBadge status={b.status} />
-                  </div>
-
-                  {locations.length > 0 && (
-                    <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                      {locations.slice(0, 3).map((loc) => (
-                        <span key={loc.locationId} style={{
-                          background: "var(--primary-light)", color: "var(--primary)",
-                          fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
-                        }}>
-                          {loc.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 16 }}>
-                    {[
-                      ["Mã tour",   b.tourId],
-                      ["Ngày đặt",  b.bookingDate],
-                      ["Số người",  `${b.numberOfPeople} người`],
-                    ].map(([l, v]) => (
-                      <div key={l}>
-                        <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 2 }}>{l}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>{v}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-light)", paddingTop: 14 }}>
-                    <div>
-                      <span style={{ fontSize: 11, color: "var(--text-light)" }}>Tổng tiền</span>
-                      <div style={{ fontSize: 20, fontWeight: 900, color: "var(--primary)" }}>{formatPrice(b.totalPrice)}</div>
-                    </div>
-                    <div style={{ display: "flex", gap: 10 }}>
-                      {b.status === "completed" && (
-                        <Link to="/my-reviews" className="btn btn-sm" style={{ background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a" }}>
-                          Viết đánh giá
-                        </Link>
-                      )}
-                      {b.status === "pending" && (
-                        <button className="btn btn-danger btn-sm">Huỷ đặt</button>
-                      )}
-                      {tour && (
-                        <Link to={`/tours/${b.tourId}`} className="btn btn-outline btn-sm">Xem tour</Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <StatusBadge status={b.status} />
               </div>
-            );
-          })}
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 16, padding: "12px 0", borderTop: "1px solid var(--border-light)", borderBottom: "1px solid var(--border-light)" }}>
+                {[
+                  ["Ngày đặt", b.bookingDate],
+                  ["Số người", `${b.numberOfPeople} người`],
+                  ["Tổng tiền", formatPrice(b.totalPrice)],
+                  ["Trạng thái", b.status === "pending" ? "Chờ xác nhận" : b.status === "confirmed" ? "Đã xác nhận" : "Hoàn thành"],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <div style={{ fontSize: 11, color: "var(--text-light)", marginBottom: 4, fontWeight: 600 }}>{label}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                {b.status === "completed" && (
+                  <button className="btn btn-sm" style={{ background: "#fef3c7", color: "#d97706", border: "1px solid #fde68a" }}>
+                    Viết đánh giá
+                  </button>
+                )}
+                {b.status === "pending" && (
+                  <button 
+                    className="btn btn-danger btn-sm"
+                    onClick={() => {
+                      setSelectedBooking(b);
+                      setShowDeleteConfirm(true);
+                    }}
+                  >
+                    Hủy đặt
+                  </button>
+                )}
+                <button 
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setSelectedBooking(b)}
+                >
+                  Chi tiết
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {bookings.length > 0 && (
-        <div style={{ textAlign: "center", marginTop: 32 }}>
-          <Link to="/tours" className="btn btn-primary">Đặt thêm tour</Link>
-        </div>
+      {/* Modal xem chi tiết - sử dụng BookingDetail component */}
+      {selectedBooking && !showDeleteConfirm && (
+        <BookingDetail 
+          booking={selectedBooking} 
+          onClose={() => setSelectedBooking(null)}
+          onCancel={() => setShowDeleteConfirm(true)}
+        />
+      )}
+
+      {/* Modal xác nhận hủy */}
+      {showDeleteConfirm && selectedBooking && (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.3)",
+              zIndex: 1001,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: "#fff",
+              borderRadius: "var(--radius-xl)",
+              padding: "32px",
+              maxWidth: 400,
+              width: "100%",
+              boxShadow: "var(--shadow-lg)",
+              zIndex: 1002,
+              textAlign: "center"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text)", marginBottom: 8 }}>Xác nhận hủy đặt?</h3>
+            <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+              Bạn có chắc muốn hủy đặt tour này? Không thể hoàn tác hành động này.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="btn btn-outline btn-sm"
+              >
+                Không hủy
+              </button>
+              <button
+                onClick={handleDeleteBooking}
+                className="btn btn-danger btn-sm"
+              >
+                Xác nhận hủy
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
+}
+
+function formatPrice(num) {
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 }

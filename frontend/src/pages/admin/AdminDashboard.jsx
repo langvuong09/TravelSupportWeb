@@ -95,9 +95,9 @@ function Overview() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>#{i + 1}</div>
                 <div style={{ flex: 1 }}>
-                  <Link to={`/tours/${t.tourId}`} style={{ fontWeight: 700, fontSize: 14, color: "var(--text)", textDecoration: "none" }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>
                     {t.name}
-                  </Link>
+                  </div>
                   <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
                     {provinces.map((p) => p.name).join(" → ")}
                   </div>

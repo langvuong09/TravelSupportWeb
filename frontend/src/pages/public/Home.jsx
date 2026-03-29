@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
-  mockLocations, mockTours, mockReviews,
-  formatPrice, getProvincesByTour, getLocationsByTour,
-  getTourThumbnail, getTourEstimatedCost, getUserById, getFullName, avgRating,
+  mockLocations, mockReviews,
+  formatPrice, getUserById, getFullName, avgRating,
 } from "../../data/mockData";
 import LocationCard from "../../components/LocationCard";
-import TourCard from "../../components/TourCard";
 import { Ic, StarRating } from "../../components/UI";
 import "./Home.css";
 
@@ -20,14 +19,18 @@ const STATS = [
 export default function Home() {
   const [search, setSearch] = useState("");
   const nav = useNavigate();
+  const { user } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (!user) {
+      nav("/login");
+      return;
+    }
     if (search.trim()) nav(`/locations?q=${encodeURIComponent(search.trim())}`);
   };
 
   const featuredLocations = mockLocations.slice(0, 6);
-  const featuredTours     = mockTours.slice(0, 3);
   const recentReviews     = mockReviews.slice(0, 3);
 
   return (
@@ -59,13 +62,39 @@ export default function Home() {
 
           <div className="hero-tags anim-fadeUp" style={{ animationDelay: "0.4s" }}>
             {["Hạ Long", "Hội An", "Đà Lạt", "Sapa", "Phú Quốc"].map((tag) => (
-              <button key={tag} onClick={() => nav(`/locations?q=${tag}`)} className="hero-tag">
+              <button
+                key={tag}
+                onClick={() => user ? nav(`/locations?q=${tag}`) : nav("/login")}
+                className="hero-tag"
+              >
                 {tag}
               </button>
             ))}
           </div>
         </div>
       </section>
+
+      {/* ── Banner đăng nhập cho khách ── */}
+      {!user && (
+        <div style={{
+          background: "linear-gradient(135deg, #0ea5e9, #6366f1)",
+          padding: "18px 24px",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 20,
+          flexWrap: "wrap",
+        }}>
+          <div style={{ color: "#fff", fontSize: 15, fontWeight: 600 }}>
+            🔒 Đăng nhập để xem địa điểm, tour và đặt chuyến đi!
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link to="/login" className="btn btn-sm" style={{ background: "#fff", color: "#0ea5e9", fontWeight: 700 }}>
+              Đăng nhập
+            </Link>
+            <Link to="/register" className="btn btn-sm btn-outline" style={{ borderColor: "rgba(255,255,255,0.7)", color: "#fff" }}>
+              Đăng ký miễn phí
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Stats ── */}
       <section className="stats-section">
@@ -82,42 +111,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Featured Locations ── */}
+      {/* ── Featured Locations (preview – blur nếu chưa login) ── */}
       <section className="section container">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
           <div>
             <h2 className="section-title">Địa điểm nổi bật</h2>
             <p className="section-sub">Những điểm đến hấp dẫn nhất Việt Nam</p>
           </div>
-          <Link to="/locations" className="btn btn-outline btn-sm">Xem tất cả <Ic.Arrow /></Link>
+          {user
+            ? <Link to="/locations" className="btn btn-outline btn-sm">Xem tất cả <Ic.Arrow /></Link>
+            : <Link to="/login"     className="btn btn-primary btn-sm">Đăng nhập để xem <Ic.Arrow /></Link>
+          }
         </div>
-        <div className="grid-3 stagger">
-          {featuredLocations.map((loc) => (
-            <div key={loc.locationId} className="anim-fadeUp">
-              <LocationCard location={loc} />
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── Featured Tours ── */}
-      <section className="section tours-section">
-        <div className="container">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-            <div>
-              <h2 className="section-title">Tour hot nhất</h2>
-              <p className="section-sub">Được yêu thích và đặt nhiều nhất</p>
-            </div>
-            <Link to="/tours" className="btn btn-outline btn-sm">Xem tất cả <Ic.Arrow /></Link>
-          </div>
+        {user ? (
           <div className="grid-3 stagger">
-            {featuredTours.map((tour) => (
-              <div key={tour.tourId} className="anim-fadeUp">
-                <TourCard tour={tour} />
+            {featuredLocations.map((loc) => (
+              <div key={loc.locationId} className="anim-fadeUp">
+                <LocationCard location={loc} />
               </div>
             ))}
           </div>
-        </div>
+        ) : (
+          /* Preview mờ khi chưa đăng nhập */
+          <div style={{ position: "relative" }}>
+            <div style={{ filter: "blur(4px)", pointerEvents: "none", userSelect: "none" }} className="grid-3">
+              {featuredLocations.slice(0, 3).map((loc) => (
+                <div key={loc.locationId}>
+                  <LocationCard location={loc} />
+                </div>
+              ))}
+            </div>
+            <div style={{
+              position: "absolute", inset: 0,
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              gap: 14,
+            }}>
+              <div style={{ fontSize: 40 }}>🔒</div>
+              <p style={{ fontWeight: 700, fontSize: 16, color: "var(--text)" }}>Đăng nhập để xem địa điểm</p>
+              <Link to="/login" className="btn btn-primary">Đăng nhập ngay</Link>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ── Reviews ── */}
@@ -130,8 +165,6 @@ export default function Home() {
           {recentReviews.map((r) => {
             const u    = getUserById(r.userId);
             const name = getFullName(u);
-            // Lấy tên tour từ tourId
-            const tourName = mockTours.find((t) => t.tourId === r.tourId)?.name || "";
             return (
               <div key={r.id} className="review-card card anim-fadeUp">
                 <div className="review-header">
@@ -141,9 +174,6 @@ export default function Home() {
                     <StarRating rating={r.rating} size={13} />
                   </div>
                   <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-light)" }}>{r.createdAt}</div>
-                </div>
-                <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 600, marginBottom: 8 }}>
-                  🏕️ {tourName}
                 </div>
                 <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{r.comment}</p>
               </div>
@@ -165,12 +195,20 @@ export default function Home() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-              <Link to="/tours" className="btn" style={{ background: "#fff", color: "var(--primary)", fontWeight: 700 }}>
-                Xem tour ngay
-              </Link>
-              <Link to="/register" className="btn btn-outline" style={{ borderColor: "rgba(255,255,255,0.6)", color: "#fff" }}>
-                Đăng ký miễn phí
-              </Link>
+              {user ? (
+                <Link to="/create-tour" className="btn" style={{ background: "#fff", color: "var(--primary)", fontWeight: 700 }}>
+                  Tạo tour
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn" style={{ background: "#fff", color: "var(--primary)", fontWeight: 700 }}>
+                    Đăng ký miễn phí
+                  </Link>
+                  <Link to="/login" className="btn btn-outline" style={{ borderColor: "rgba(255,255,255,0.6)", color: "#fff" }}>
+                    Đăng nhập
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

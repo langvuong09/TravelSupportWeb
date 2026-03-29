@@ -92,38 +92,6 @@ export default function LocationDetail() {
             <p style={{ color: "var(--text-muted)", lineHeight: 1.8, fontSize: 15 }}>{loc.description}</p>
           </div>
 
-          {/* Tours */}
-          {tours.length > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Tour ghé thăm {loc.name}</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {tours.map((t) => {
-                  const tourRating = avgRating(t.tourId);
-                  return (
-                    <Link key={t.tourId} to={`/tours/${t.tourId}`} style={{
-                      background: "#fff", border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-md)", padding: "18px 20px",
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      textDecoration: "none", transition: "box-shadow var(--transition)",
-                    }}
-                      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "var(--shadow-md)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", marginBottom: 6 }}>{t.name}</div>
-                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                          Ngày tạo: {t.createdAt}
-                          {Number(tourRating) > 0 && <span style={{ marginLeft: 12, color: "#f59e0b" }}>★ {tourRating}</span>}
-                        </div>
-                      </div>
-                      <span style={{ color: "var(--primary)", fontSize: 18 }}>→</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Reviews */}
           {reviews.length > 0 && (
             <div>
@@ -169,11 +137,11 @@ export default function LocationDetail() {
               Có {tours.length} tour ghé thăm {loc.name}. Đặt sớm để nhận ưu đãi!
             </p>
             <Link
-              to={user ? `/tours` : "/login"}
+              to={user ? `/create-tour` : "/login"}
               className="btn"
               style={{ width: "100%", background: "#fff", color: "var(--primary)", fontWeight: 700, justifyContent: "center" }}
             >
-              {user ? "Xem các tour" : "Đăng nhập để đặt"}
+              {user ? "Tạo tour" : "Đăng nhập để đặt"}
             </Link>
           </div>
 

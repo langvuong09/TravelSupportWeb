@@ -128,7 +128,7 @@ export default function Profile() {
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <div style={{ fontSize: 48 }}>🏕️</div>
               <p style={{ color: "var(--text-muted)", marginTop: 12 }}>Chưa có đặt tour nào</p>
-              <Link to="/tours" className="btn btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
+              <Link to="/create-tour" className="btn btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
                 Khám phá tour ngay
               </Link>
             </div>
@@ -150,9 +150,9 @@ export default function Profile() {
                     <img src={thumbnail} alt={tour.name}
                       style={{ width: 88, height: 66, objectFit: "cover", borderRadius: "var(--radius-sm)", flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
-                      <Link to={`/tours/${tour.tourId}`} style={{ fontWeight: 800, fontSize: 15, color: "var(--text)", textDecoration: "none" }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
                         {tour.name}
-                      </Link>
+                      </div>
                       <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "3px 0 6px" }}>
                         {provinces.map((p) => p.name).join(" → ")}
                       </div>

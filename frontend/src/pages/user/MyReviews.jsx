@@ -178,9 +178,9 @@ export default function MyReviews() {
                 <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
                   <img src={thumbnail} alt={tour?.name} style={{ width: 80, height: 60, objectFit: "cover", borderRadius: "var(--radius-sm)" }} />
                   <div style={{ flex: 1 }}>
-                    <Link to={`/tours/${tour?.tourId}`} style={{ fontWeight: 800, fontSize: 15, color: "var(--primary)", textDecoration: "none" }}>
+                    <div style={{ fontWeight: 800, fontSize: 15, color: "var(--primary)" }}>
                       {tour?.name}
-                    </Link>
+                    </div>
                     <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "2px 0 6px" }}>
                       {provinces.map((p) => p.name).join(" → ")}
                     </div>

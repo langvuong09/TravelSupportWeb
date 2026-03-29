@@ -1,27 +1,23 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { BookingProvider } from "./context/BookingContext";
 import Navbar from "./components/Navbar";
 
-// Public pages
 import Home           from "./pages/public/Home";
 import Locations      from "./pages/public/Locations";
 import LocationDetail from "./pages/public/LocationDetail";
-import Tours          from "./pages/public/Tours";
-import TourDetail     from "./pages/public/TourDetail";
 import Login          from "./pages/public/Login";
 import Register       from "./pages/public/Register";
 
-// User pages
 import BookingForm from "./pages/user/BookingForm";
 import MyBookings  from "./pages/user/MyBookings";
 import MyReviews   from "./pages/user/MyReviews";
 import Profile     from "./pages/user/Profile";
+import CreateTour  from "./pages/user/CreateTour";
 
-// Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { AdminUsers, AdminLocations, AdminTours, AdminBookings, AdminReviews } from "./pages/admin/AdminPages";
 
-// ── Guards ──────────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { user } = useAuth();
   const loc = useLocation();
@@ -43,7 +39,6 @@ function RequireUser({ children }) {
   return children;
 }
 
-// ── Layout ──────────────────────────────────────────────────
 function Layout({ children }) {
   return (
     <>
@@ -63,35 +58,30 @@ function Layout({ children }) {
   );
 }
 
-// ── App ─────────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <Layout>
       <Routes>
-        {/* ── PUBLIC (không cần đăng nhập) ─────────────────── */}
-        <Route path="/"                    element={<Home />} />
-        <Route path="/locations"           element={<Locations />} />
-        <Route path="/locations/:id"       element={<LocationDetail />} />
-        <Route path="/tours"               element={<Tours />} />
-        <Route path="/tours/:id"           element={<TourDetail />} />
-        <Route path="/login"               element={<Login />} />
-        <Route path="/register"            element={<Register />} />
+        <Route path="/"         element={<Home />} />
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* ── USER (cần đăng nhập, không phải admin) ─────── */}
-        <Route path="/book/:tourId"  element={<RequireAuth><BookingForm /></RequireAuth>} />
-        <Route path="/my-bookings"   element={<RequireUser><MyBookings /></RequireUser>} />
-        <Route path="/my-reviews"    element={<RequireUser><MyReviews /></RequireUser>} />
-        <Route path="/profile"       element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route path="/locations"     element={<RequireAuth><Locations /></RequireAuth>} />
+        <Route path="/locations/:id" element={<RequireAuth><LocationDetail /></RequireAuth>} />
 
-        {/* ── ADMIN (cần đăng nhập + role ADMIN) ─────────── */}
-        <Route path="/admin"               element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-        <Route path="/admin/users"         element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
-        <Route path="/admin/locations"     element={<RequireAdmin><AdminLocations /></RequireAdmin>} />
-        <Route path="/admin/tours"         element={<RequireAdmin><AdminTours /></RequireAdmin>} />
-        <Route path="/admin/bookings"      element={<RequireAdmin><AdminBookings /></RequireAdmin>} />
-        <Route path="/admin/reviews"       element={<RequireAdmin><AdminReviews /></RequireAdmin>} />
+        <Route path="/create-tour"  element={<RequireUser><CreateTour /></RequireUser>} />
+        <Route path="/book/:tourId" element={<RequireUser><BookingForm /></RequireUser>} />
+        <Route path="/my-bookings"  element={<RequireUser><MyBookings /></RequireUser>} />
+        <Route path="/my-reviews"   element={<RequireUser><MyReviews /></RequireUser>} />
+        <Route path="/profile"      element={<RequireAuth><Profile /></RequireAuth>} />
 
-        {/* 404 */}
+        <Route path="/admin"           element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+        <Route path="/admin/users"     element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+        <Route path="/admin/locations" element={<RequireAdmin><AdminLocations /></RequireAdmin>} />
+        <Route path="/admin/tours"     element={<RequireAdmin><AdminTours /></RequireAdmin>} />
+        <Route path="/admin/bookings"  element={<RequireAdmin><AdminBookings /></RequireAdmin>} />
+        <Route path="/admin/reviews"   element={<RequireAdmin><AdminReviews /></RequireAdmin>} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
@@ -102,7 +92,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <BookingProvider>
+          <AppRoutes />
+        </BookingProvider>
       </AuthProvider>
     </BrowserRouter>
   );
