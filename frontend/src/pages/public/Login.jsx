@@ -16,7 +16,7 @@ export default function Login() {
     e.preventDefault();
     setError(""); setLoading(true);
     await new Promise(r => setTimeout(r, 400)); // giả lập loading
-    const res = login(form.username, form.password);
+    const res = await login(form.username, form.password);
     setLoading(false);
     if (res.success) {
       nav(res.user.role === "ADMIN" ? "/admin" : from, { replace: true });
@@ -68,11 +68,6 @@ export default function Login() {
               {error}
             </div>
           )}
-
-          {/* Demo accounts hint */}
-          <div style={{ background: "var(--primary-light)", border: "1px solid #bae6fd", borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#0369a1" }}>
-            <strong>Demo:</strong> Admin: <code>admin/admin</code> · User: <code>user1/123456</code>
-          </div>
 
           <button
             type="submit"

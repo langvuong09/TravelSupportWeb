@@ -7,6 +7,7 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const nav = useNavigate();
+  const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
   const validate = () => {
     const e = {};
@@ -19,12 +20,38 @@ export default function Register() {
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    setSuccess(true);
-    setTimeout(() => nav("/login"), 2000);
+
+    try {
+      const res = await fetch(`${API}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: form.fullName,
+          username: form.username,
+          email: form.email,
+          phone: form.phone,
+          birthDate: form.birthDate,
+          password: form.password
+        })
+      });
+      const data = await res.json();
+      if (data.error) {
+        if (data.error === 'username_taken') {
+          setErrors({ username: 'Tên đăng nhập đã tồn tại' });
+        } else {
+          setErrors({ form: data.error });
+        }
+        return;
+      }
+      setSuccess(true);
+      setTimeout(() => nav('/login'), 1200);
+    } catch (err) {
+      setErrors({ form: 'Lỗi mạng, thử lại sau' });
+    }
   };
 
   if (success) return (
@@ -38,20 +65,6 @@ export default function Register() {
         <h2 style={{ fontWeight: 800, marginBottom: 8 }}>Đăng ký thành công!</h2>
         <p style={{ color: "var(--text-muted)" }}>Đang chuyển đến trang đăng nhập...</p>
       </div>
-    </div>
-  );
-
-  const Field = ({ k, label, type="text", placeholder="" }) => (
-    <div>
-      <label className="field-label">{label}</label>
-      <input
-        className="input-field"
-        type={type} placeholder={placeholder}
-        value={form[k]}
-        onChange={e => { setForm({...form,[k]:e.target.value}); setErrors({...errors,[k]:""}); }}
-        style={errors[k] ? { borderColor: "var(--danger)" } : {}}
-      />
-      {errors[k] && <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 4 }}>{errors[k]}</p>}
     </div>
   );
 
@@ -71,15 +84,19 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Field k="fullName"  label="Họ và tên *"         placeholder="Nguyễn Văn A" />
-            <Field k="username"  label="Tên đăng nhập *"     placeholder="nguyenvana" />
-            <Field k="email"     label="Email *"             type="email" placeholder="abc@gmail.com" />
-            <Field k="phone"     label="Số điện thoại *"     type="tel"   placeholder="0901234567" />
-            <Field k="birthDate" label="Ngày sinh"           type="date" />
+            <Field k="fullName"  label="Họ và tên *"         placeholder="Nguyễn Văn A" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
+            <Field k="username"  label="Tên đăng nhập *"     placeholder="nguyenvana" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
+            <Field k="email"     label="Email *"             type="email" placeholder="abc@gmail.com" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
+            <Field k="phone"     label="Số điện thoại *"     type="tel"   placeholder="0901234567" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
+            <Field k="birthDate" label="Ngày sinh"           type="date" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
             <div /> {/* spacer */}
-            <Field k="password"  label="Mật khẩu *"          type="password" placeholder="Tối thiểu 6 ký tự" />
-            <Field k="confirm"   label="Xác nhận mật khẩu *" type="password" placeholder="Nhập lại mật khẩu" />
+            <Field k="password"  label="Mật khẩu *"          type="password" placeholder="Tối thiểu 6 ký tự" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
+            <Field k="confirm"   label="Xác nhận mật khẩu *" type="password" placeholder="Nhập lại mật khẩu" form={form} setForm={setForm} errors={errors} setErrors={setErrors} />
           </div>
+
+          {errors.form && (
+            <div style={{ color: "var(--danger)", padding: "8px 10px", border: "1px solid #fecaca", borderRadius: 8, marginBottom: 8 }}>{errors.form}</div>
+          )}
 
           <button type="submit" className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center", marginTop: 6 }}>
             Đăng ký
@@ -91,6 +108,30 @@ export default function Register() {
           <Link to="/login" style={{ color: "var(--primary)", fontWeight: 700 }}>Đăng nhập</Link>
         </p>
       </div>
+    </div>
+  );
+}
+
+function Field({ k, label, type="text", placeholder="", form, setForm, errors, setErrors }) {
+  return (
+    <div>
+      <label className="field-label">{label}</label>
+      <input
+        className="input-field"
+        type={type}
+        placeholder={placeholder}
+        value={form[k]}
+        onChange={e => {
+          setForm(prev => ({ ...prev, [k]: e.target.value }));
+          setErrors(prev => ({ ...prev, [k]: "" }));
+        }}
+        style={errors[k] ? { borderColor: "var(--danger)" } : {}}
+      />
+      {errors[k] && (
+        <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 4 }}>
+          {errors[k]}
+        </p>
+      )}
     </div>
   );
 }
