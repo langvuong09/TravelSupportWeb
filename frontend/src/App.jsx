@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { BookingProvider } from "./context/BookingContext";
 import Navbar from "./components/Navbar";
+import AdminNavbar from "./components/AdminNavbar";
 
 import Home           from "./pages/public/Home";
 import Locations      from "./pages/public/Locations";
@@ -15,8 +16,7 @@ import MyReviews   from "./pages/user/MyReviews";
 import Profile     from "./pages/user/Profile";
 import CreateTour  from "./pages/user/CreateTour";
 
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import { AdminUsers, AdminLocations, AdminTours, AdminBookings, AdminReviews } from "./pages/admin/AdminPages";
+import AdminPages from "./pages/admin/AdminPages";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -58,33 +58,35 @@ function Layout({ children }) {
   );
 }
 
+function AdminLayout({ children }) {
+  return (
+    <>
+      <AdminNavbar />
+      <main>{children}</main>
+    </>
+  );
+}
+
 function AppRoutes() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/"         element={<Home />} />
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <Routes>
+      <Route element={<Layout><Home /></Layout>} path="/" />
+      <Route element={<Layout><Login /></Layout>} path="/login" />
+      <Route element={<Layout><Register /></Layout>} path="/register" />
 
-        <Route path="/locations"     element={<RequireAuth><Locations /></RequireAuth>} />
-        <Route path="/locations/:id" element={<RequireAuth><LocationDetail /></RequireAuth>} />
+      <Route path="/locations"     element={<Layout><RequireAuth><Locations /></RequireAuth></Layout>} />
+      <Route path="/locations/:id" element={<Layout><RequireAuth><LocationDetail /></RequireAuth></Layout>} />
 
-        <Route path="/create-tour"  element={<RequireUser><CreateTour /></RequireUser>} />
-        <Route path="/book/:tourId" element={<RequireUser><BookingForm /></RequireUser>} />
-        <Route path="/my-bookings"  element={<RequireUser><MyBookings /></RequireUser>} />
-        <Route path="/my-reviews"   element={<RequireUser><MyReviews /></RequireUser>} />
-        <Route path="/profile"      element={<RequireAuth><Profile /></RequireAuth>} />
+      <Route path="/create-tour"  element={<Layout><RequireUser><CreateTour /></RequireUser></Layout>} />
+      <Route path="/book/:tourId" element={<Layout><RequireUser><BookingForm /></RequireUser></Layout>} />
+      <Route path="/my-bookings"  element={<Layout><RequireUser><MyBookings /></RequireUser></Layout>} />
+      <Route path="/my-reviews"   element={<Layout><RequireUser><MyReviews /></RequireUser></Layout>} />
+      <Route path="/profile"      element={<Layout><RequireAuth><Profile /></RequireAuth></Layout>} />
 
-        <Route path="/admin"           element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-        <Route path="/admin/users"     element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
-        <Route path="/admin/locations" element={<RequireAdmin><AdminLocations /></RequireAdmin>} />
-        <Route path="/admin/tours"     element={<RequireAdmin><AdminTours /></RequireAdmin>} />
-        <Route path="/admin/bookings"  element={<RequireAdmin><AdminBookings /></RequireAdmin>} />
-        <Route path="/admin/reviews"   element={<RequireAdmin><AdminReviews /></RequireAdmin>} />
+      <Route path="/admin/*"    element={<AdminLayout><RequireAdmin><AdminPages /></RequireAdmin></AdminLayout>} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

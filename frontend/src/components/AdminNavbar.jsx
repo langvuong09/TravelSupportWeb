@@ -4,30 +4,19 @@ import { Ic, Avatar } from "./UI";
 import { useState } from "react";
 import "./Navbar.css";
 
-const PUBLIC_NAV = [
-  { path: "/",          label: "Trang chủ", icon: <Ic.Home /> },
-  { path: "/locations", label: "Địa điểm",  icon: <Ic.Map /> },
+const ADMIN_NAV = [
+  { path: "/admin",           label: "Dashboard",  icon: <Ic.Dashboard /> },
+  { path: "/admin/locations", label: "Địa điểm",   icon: <Ic.Map /> },
+  { path: "/admin/foods",     label: "Ẩm thực",    icon: <Ic.Bookmark /> },
+  { path: "/admin/provinces", label: "Tỉnh thành", icon: <Ic.Map /> },
+  { path: "/admin/users",     label: "Người dùng", icon: <Ic.User /> },
 ];
 
-const USER_NAV = [
-  { path: "/",             label: "Trang chủ",  icon: <Ic.Home /> },
-  { path: "/locations",    label: "Địa điểm",   icon: <Ic.Map /> },
-  { path: "/create-tour",  label: "Tạo tour",   icon: <Ic.Plus /> },
-  { path: "/my-bookings",  label: "Tours list",   icon: <Ic.Bookmark /> },
-  { path: "/my-reviews",   label: "Đánh giá",   icon: <Ic.Review /> },
-];
-
-export default function Navbar() {
+export default function AdminNavbar() {
   const { user, logout } = useAuth();
   const loc = useLocation();
   const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const navItems = !user
-    ? PUBLIC_NAV
-    : user.role === "ADMIN"
-    ? []
-    : USER_NAV;
 
   const handleLogout = () => {
     logout();
@@ -39,12 +28,12 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner container">
         <Link to="/" className="navbar-logo">
-          <span className="logo-icon">✈</span>
-          <span className="logo-text">TravelSupport</span>
+          <span className="logo-icon">🛡️</span>
+          <span className="logo-text">Admin Panel</span>
         </Link>
 
         <div className="navbar-links">
-          {navItems.map((item) => (
+          {ADMIN_NAV.map((item) => (
             <Link
               key={item.path}
               to={item.path}
@@ -57,18 +46,13 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-auth">
-          {!user ? (
-            <>
-              <Link to="/login"    className="btn btn-outline btn-sm">Đăng nhập</Link>
-              <Link to="/register" className="btn btn-primary btn-sm">Đăng ký</Link>
-            </>
-          ) : (
+          {user && (
             <div className="user-menu">
               <button className="user-trigger" onClick={() => setMenuOpen(!menuOpen)}>
                 <Avatar name={user.fullName || user.username} size={34} />
                 <div className="user-info">
                   <span className="user-name">{user.fullName || user.username}</span>
-                  <span className="user-role">{user.role}</span>
+                  <span className="user-role">Admin</span>
                 </div>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"
                   style={{ transform: menuOpen ? "rotate(180deg)" : "", transition: "0.2s" }}>
@@ -81,18 +65,7 @@ export default function Navbar() {
                   <Link to="/profile" className="dropdown-item" onClick={() => setMenuOpen(false)}>
                     <Ic.User /> Hồ sơ cá nhân
                   </Link>
-                  {user.role === "USER" && (
-                    <>
-                      <Link to="/create-tour" className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                        <Ic.Plus /> Tạo tour tùy chỉnh
-                      </Link>
-                      <Link to="/my-bookings" className="dropdown-item" onClick={() => setMenuOpen(false)}>
-                        <Ic.Bookmark /> Đặt tour của tôi
-                      </Link>
-                    </>
-                  )}
-                  <div className="dropdown-divider" />
-                  <button className="dropdown-item danger" onClick={handleLogout}>
+                  <button onClick={handleLogout} className="dropdown-item" style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}>
                     <Ic.Logout /> Đăng xuất
                   </button>
                 </div>
