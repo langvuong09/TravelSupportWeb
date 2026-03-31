@@ -3,16 +3,17 @@
 // Gồm: Dashboard, Locations, Users, Bookings, Foods, Provinces, Transport
 // ============================================================
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   mockUsers, mockTours, mockLocations, mockProvinces,
-  mockBookings, mockReviews, mockFoods, mockTransportTypes,
+  mockBookings, mockFoods, mockTransportTypes,
   mockTourLocations, mockTourProvinces, mockTourFoods,
   getFullName, getProvince, getLocationsByTour, getProvincesByTour,
   getFoodsByTour, getTransportByTour, getTourThumbnail,
   getTourEstimatedCost, avgRating, formatPrice,
 } from "../../data/mockData";
-import { Ic, StarRating } from "../../components/UI";
+import { Ic } from "../../components/UI";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import LocationModal from "../../components/LocationModal";
 import UserModal from "../../components/UserModal";
@@ -317,11 +318,10 @@ function AdminUsers() {
       </div>
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
         <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên, email, username..." />
-        <Tbl headers={["Người dùng", "Username", "Email", "Role", "Bookings", "Đánh giá", ""]} empty={filtered.length === 0}>
+        <Tbl headers={["Người dùng", "Username", "Email", "Role", "Bookings", ""]} empty={filtered.length === 0}>
           {filtered.map((u) => {
             const fullName = getFullName(u);
             const bookings = mockBookings.filter((b) => b.userId === u.userId).length;
-            const reviews  = mockReviews.filter((r) => r.userId === u.userId).length;
             return (
               <Tr key={u.userId}>
                 <Td>
@@ -343,7 +343,6 @@ function AdminUsers() {
                 <Td style={{ fontSize: 12, color: "var(--text-muted)" }}>{u.email}</Td>
                 <Td><Badge color={u.role === "ADMIN" ? "red" : "blue"}>{u.role}</Badge></Td>
                 <Td><Badge color={bookings > 0 ? "green" : "gray"}>{bookings}</Badge></Td>
-                <Td><Badge color={reviews > 0 ? "yellow" : "gray"}>{reviews}</Badge></Td>
                 <Td>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => handleEditClick(u)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
@@ -517,11 +516,17 @@ function AdminProvinces() {
   const [modal, setModal] = useState(null);
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   const filtered = provinces.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filtered.slice(startIdx, startIdx + itemsPerPage);
 
   const handleAddClick = () => {
-    setFormData({ name: "", description: "" });
+    setFormData({ name: "" });
     setModal("add");
   };
 
@@ -539,6 +544,7 @@ function AdminProvinces() {
       const newId = Math.max(...provinces.map(p => p.provinceId || 0), 0) + 1;
       setProvinces([...provinces, { ...formData, provinceId: newId }]);
       setToast({ message: "✅ Thêm tỉnh thành công", type: "success" });
+      setCurrentPage(1);
     } else {
       setProvinces(provinces.map(p => p.provinceId === formData.provinceId ? formData : p));
       setToast({ message: "✅ Cập nhật tỉnh thành công", type: "success" });
@@ -546,33 +552,202 @@ function AdminProvinces() {
     setModal(null);
   };
 
+  const handleDelete = (p) => {
+    setProvinces((prev) => prev.filter((province) => province.provinceId !== p.provinceId));
+    setToast({ message: "✅ Xóa tỉnh thành công", type: "success" });
+    setConfirm(null);
+  };
+
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800 }}>Quản lý Tỉnh / Thành phố</h2>
-        <button onClick={handleAddClick} className="btn btn-primary btn-sm">+ Thêm tỉnh</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontSize: 24, fontWeight: 800, margin: 0, marginBottom: 4 }}>Quản lý Tỉnh / Thành phố</h2>
+          <p style={{ fontSize: 13, color: "#666", margin: 0 }}>Tổng cộng: {filtered.length} tỉnh thành</p>
+        </div>
+        <button onClick={handleAddClick} className="btn btn-primary btn-sm" style={{ background: "linear-gradient(135deg, var(--primary), #2563eb)", boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}>+ Thêm tỉnh</button>
       </div>
-      <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
-        <SearchBar value={search} onChange={setSearch} placeholder="Tìm tỉnh thành..." />
-        <Tbl headers={["Province ID", "Tên tỉnh", "Số địa điểm", "Số món ăn", ""]} empty={filtered.length === 0}>
-          {filtered.map((p) => {
-            const locCnt  = mockLocations.filter((l) => l.provinceId === p.provinceId).length;
-            const foodCnt = mockFoods.filter((f) => f.provinceId === p.provinceId).length;
-            const tourCnt = mockTourProvinces.filter((tp) => tp.provinceId === p.provinceId).length;
-            return (
-              <Tr key={p.provinceId}>
-                <Td><Badge color="gray">#{p.provinceId}</Badge></Td>
-                <Td><span style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</span></Td>
-                <Td><Badge color={locCnt  > 0 ? "blue"   : "gray"}>{locCnt}  địa điểm</Badge></Td>
-                <Td><Badge color={foodCnt > 0 ? "yellow" : "gray"}>{foodCnt} món</Badge></Td>
+      <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "var(--radius-lg)", padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+        <SearchBar value={search} onChange={(val) => { setSearch(val); setCurrentPage(1); }} placeholder="Tìm tỉnh thành..." />
+        
+        {paginatedData.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "#999" }}>
+            <p style={{ fontSize: 16 }}>Không tìm thấy tỉnh thành nào</p>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginTop: 20 }}>
+              {paginatedData.map((p) => (
+                <div
+                  key={p.provinceId}
+                  style={{
+                    background: "linear-gradient(135deg, #f8f9fa, #f0f3ff)",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "var(--radius-lg)",
+                    padding: 16,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = "0 8px 16px rgba(59, 130, 246, 0.12)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                  }}
+                >
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 0, 
+                    left: 0, 
+                    width: "100%", 
+                    height: 4, 
+                    background: "linear-gradient(90deg, var(--primary), #3b82f6)" 
+                  }}></div>
+                  <h3 style={{ fontWeight: 700, fontSize: 15, margin: "12px 0 0 0", color: "#1f2937", lineHeight: 1.4 }}>{p.name}</h3>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    <button
+                      onClick={() => handleEditClick(p)}
+                      style={{
+                        background: "var(--primary)",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        transition: "all 0.2s ease",
+                        flex: 1
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = "#2563eb"}
+                      onMouseLeave={(e) => e.target.style.background = "var(--primary)"}
+                    >
+                      ✏️ Sửa
+                    </button>
+                    <button
+                      onClick={() => setConfirm(p)}
+                      style={{
+                        background: "#fee2e2",
+                        border: "1px solid #fecaca",
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        color: "#dc2626",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        transition: "all 0.2s ease",
+                        flex: 1
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = "#fca5a5";
+                        e.target.style.color = "#991b1b";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = "#fee2e2";
+                        e.target.style.color = "#dc2626";
+                      }}
+                    >
+                      🗑️ Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-                <Td>
-                  <button onClick={() => handleEditClick(p)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
-                </Td>
-              </Tr>
-            );
-          })}
-        </Tbl>
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24, paddingTop: 20, borderTop: "1px solid #e5e7eb" }}>
+                {currentPage > 1 && (
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    style={{
+                      background: "#fff",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: "#374151",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = "#f3f4f6";
+                      e.target.style.borderColor = "var(--primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = "#fff";
+                      e.target.style.borderColor = "#d1d5db";
+                    }}
+                  >
+                    ← Trước
+                  </button>
+                )}
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    style={{
+                      background: page === currentPage ? "var(--primary)" : "#fff",
+                      border: page === currentPage ? "none" : "1px solid #d1d5db",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: page === currentPage ? "#fff" : "#374151",
+                      minWidth: 36,
+                      transition: "all 0.2s ease",
+                      fontWeight: page === currentPage ? 600 : 400
+                    }}
+                    onMouseEnter={(e) => {
+                      if (page !== currentPage) {
+                        e.target.style.background = "#f3f4f6";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (page !== currentPage) {
+                        e.target.style.background = "#fff";
+                      }
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {currentPage < totalPages && (
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    style={{
+                      background: "#fff",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      padding: "8px 12px",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      color: "#374151",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = "#f3f4f6";
+                      e.target.style.borderColor = "var(--primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = "#fff";
+                      e.target.style.borderColor = "#d1d5db";
+                    }}
+                  >
+                    Sau →
+                  </button>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {modal && (
@@ -581,6 +756,15 @@ function AdminProvinces() {
           data={formData}
           onSave={handleSave}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          title="Xóa tỉnh thành này?"
+          desc={`Xóa "${confirm.name}" khỏi hệ thống?`}
+          onConfirm={() => handleDelete(confirm)}
+          onCancel={() => setConfirm(null)}
         />
       )}
 
@@ -607,6 +791,8 @@ const NAV_ITEMS = [
 export default function AdminPages() {
   const [tab, setTab] = useState("dashboard");
   const location = useLocation();
+  const { logout } = useAuth();
+  const nav = useNavigate();
 
   // Sync tab state with URL pathname
   useEffect(() => {
@@ -615,7 +801,6 @@ export default function AdminPages() {
     else if (pathname.includes("foods")) setTab("foods");
     else if (pathname.includes("provinces")) setTab("provinces");
     else if (pathname.includes("users")) setTab("users");
-    else if (pathname.includes("reviews")) setTab("reviews");
     else setTab("dashboard");
   }, [location.pathname]);
 
@@ -670,6 +855,23 @@ export default function AdminPages() {
               <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{l}</span>
             </div>
           ))}
+          <button 
+            onClick={() => {
+              logout();
+              nav("/");
+            }}
+            style={{
+              width: "100%", marginTop: 12, padding: "9px 12px",
+              background: "#fee2e2", border: "none", borderRadius: "var(--radius-sm)",
+              color: "#dc2626", fontWeight: 600, fontSize: 13, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              transition: "all .2s"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "#fecaca"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "#fee2e2"}
+          >
+            🚪 Đăng xuất
+          </button>
         </div>
       </aside>
 
@@ -687,69 +889,6 @@ export {
   AdminFoods,
   AdminProvinces,
 };
-
-// AdminReviews chưa có trong file gốc – tạo nhanh ở đây
-export function AdminReviews() {
-  const [search, setSearch] = useState("");
-  const filtered = mockReviews.filter((r) => {
-    const u    = mockUsers.find((u) => u.userId === r.userId);
-    const tour = mockTours.find((t) => t.tourId === r.tourId);
-    const q    = search.toLowerCase();
-    return (
-      getFullName(u).toLowerCase().includes(q) ||
-      (tour?.name || "").toLowerCase().includes(q) ||
-      r.comment.toLowerCase().includes(q)
-    );
-  });
-
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800 }}>Quản lý Đánh giá</h2>
-        <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{filtered.length} đánh giá</span>
-      </div>
-
-      <input
-        className="input-field"
-        style={{ maxWidth: 360, marginBottom: 16 }}
-        placeholder="Tìm theo tên, tour, nội dung..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {filtered.map((r) => {
-          const u         = mockUsers.find((u) => u.userId === r.userId);
-          const tour      = mockTours.find((t) => t.tourId === r.tourId);
-          const thumbnail = getTourThumbnail(r.tourId);
-          return (
-            <div key={r.id} style={{
-              background: "#fff", border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)", padding: "14px 18px",
-              display: "flex", gap: 14, alignItems: "flex-start",
-              boxShadow: "var(--shadow-sm)",
-            }}>
-              <img src={thumbnail} alt="" style={{ width: 60, height: 46, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                  <div>
-                    <span style={{ fontWeight: 700 }}>{getFullName(u)}</span>
-                    <span style={{ color: "var(--text-muted)", fontSize: 12, margin: "0 8px" }}>→</span>
-                    <span style={{ color: "var(--primary)", fontWeight: 600, fontSize: 13 }}>{tour?.name}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--text-light)" }}>{r.createdAt}</div>
-                </div>
-                <StarRating rating={r.rating} size={13} />
-                <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-muted)" }}>{r.comment}</p>
-              </div>
-              <button className="btn btn-danger btn-xs" style={{ flexShrink: 0 }}>Xoá</button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export function AdminTransport() {
   const [transports, setTransports] = useState(mockTransportTypes);

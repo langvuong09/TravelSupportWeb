@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
-  mockBookings, mockReviews, mockTours,
+  mockBookings, mockTours,
   getFullName, getTourThumbnail, getTourEstimatedCost,
   getProvincesByTour, formatPrice,
 } from "../../data/mockData";
 import { Link } from "react-router-dom";
-import { StarRating } from "../../components/UI";
 
 /* ── Avatar ── */
-function Avatar({ user, size = 80 }) {
+function Avatar({ user, size = 80, avatarUrl = null }) {
   const name = getFullName(user);
+  
+  if (avatarUrl) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt={name}
+        style={{
+          width: size, 
+          height: size, 
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+  
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
@@ -25,7 +41,7 @@ function Avatar({ user, size = 80 }) {
 }
 
 /* ── Tab bar ── */
-const TABS = ["Thông tin", "Đặt tour", "Đánh giá"];
+const TABS = ["Thông tin"];
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -34,11 +50,16 @@ export default function Profile() {
     firstName: user?.firstName || "",
     lastName:  user?.lastName  || "",
     email:     user?.email     || "",
+    phone:     user?.phone     || "",
+    birthDate: user?.birthDate || "",
   });
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || null);
+  const [changePassword, setChangePassword] = useState({ current: "", new: "", confirm: "" });
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const myBookings = mockBookings.filter((b) => b.userId === user?.userId);
-  const myReviews  = mockReviews.filter((r) => r.userId === user?.userId);
 
   const handleSave = () => {
     setSaved(true);
@@ -54,26 +75,23 @@ export default function Profile() {
         display: "flex", alignItems: "center", gap: 24, marginBottom: 28,
         color: "#fff",
       }}>
-        <Avatar user={user} size={72} />
+        <Avatar user={user} size={72} avatarUrl={avatarUrl} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 22, fontWeight: 900 }}>{getFullName(user)}</div>
           <div style={{ fontSize: 14, opacity: 0.8 }}>{user?.email}</div>
           <div style={{ marginTop: 8, display: "flex", gap: 18 }}>
-            {[
-              ["🏕️", myBookings.length, "tour đã đặt"],
-              ["⭐", myReviews.length,  "đánh giá"],
-            ].map(([emoji, n, label]) => (
-              <div key={label}>
-                <span style={{ fontWeight: 800 }}>{emoji} {n} </span>
-                <span style={{ opacity: 0.75, fontSize: 13 }}>{label}</span>
-              </div>
-            ))}
           </div>
         </div>
-        <button onClick={logout} className="btn btn-outline"
-          style={{ borderColor: "rgba(255,255,255,.5)", color: "#fff" }}>
-          Đăng xuất
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => setShowChangePassword(!showChangePassword)} className="btn btn-outline"
+            style={{ borderColor: "rgba(255,255,255,.5)", color: "#fff" }}>
+            Đổi mật khẩu
+          </button>
+          <button onClick={logout} className="btn btn-outline"
+            style={{ borderColor: "rgba(255,255,255,.5)", color: "#fff" }}>
+            Đăng xuất
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -95,8 +113,108 @@ export default function Profile() {
 
       {/* ── Tab: Thông tin ── */}
       {tab === "Thông tin" && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 28, maxWidth: 560 }}>
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 28, maxWidth: 700 }}>
+          {/* Change Password Section */}
+          {showChangePassword && (
+            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid var(--border)" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 20 }}>Đổi mật khẩu</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+                <div>
+                  <label className="field-label">Mật khẩu hiện tại</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập mật khẩu hiện tại"
+                    className="input-field" 
+                    value={changePassword.current}
+                    onChange={(e) => setChangePassword({ ...changePassword, current: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="field-label">Mật khẩu mới</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    className="input-field" 
+                    value={changePassword.new}
+                    onChange={(e) => setChangePassword({ ...changePassword, new: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="field-label">Nhập lại mật khẩu mới</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập lại mật khẩu mới"
+                    className="input-field" 
+                    value={changePassword.confirm}
+                    onChange={(e) => setChangePassword({ ...changePassword, confirm: e.target.value })} 
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                <button 
+                  onClick={() => {
+                    if (changePassword.new !== changePassword.confirm) {
+                      alert("Mật khẩu nhập lại không trùng khớp");
+                      return;
+                    }
+                    setPasswordSaved(true);
+                    setTimeout(() => { setPasswordSaved(false); setShowChangePassword(false); }, 2000);
+                  }} 
+                  className="btn btn-primary"
+                >
+                  Cập nhật mật khẩu
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setChangePassword({ current: "", new: "", confirm: "" });
+                  }} 
+                  className="btn btn-outline"
+                >
+                  Huỷ
+                </button>
+                {passwordSaved && <span style={{ color: "var(--success)", fontSize: 13, fontWeight: 600, alignSelf: "center" }}>✓ Đã lưu!</span>}
+              </div>
+            </div>
+          )}
+
+          {/* Profile Info Section */}
           <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 20 }}>Chỉnh sửa thông tin</h2>
+          
+          {/* Avatar Upload */}
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <Avatar user={user} size={100} avatarUrl={avatarUrl} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: 10, fontWeight: 600, color: "var(--text)" }}>Ảnh đại diện</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      setAvatarUrl(ev.target?.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                style={{ marginBottom: 8 }}
+              />
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>Chọn ảnh JPG, PNG (tối đa 5MB)</p>
+              {avatarUrl && (
+                <button 
+                  onClick={() => setAvatarUrl(null)}
+                  style={{ marginTop: 8, padding: "4px 12px", background: "#fee2e2", border: "none", borderRadius: 6, color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+                >
+                  Xoá ảnh
+                </button>
+              )}
+            </div>
+          </div>
+          
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label className="field-label">Họ</label>
@@ -112,6 +230,16 @@ export default function Profile() {
               <label className="field-label">Email</label>
               <input className="input-field" type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Số điện thoại</label>
+              <input className="input-field" type="tel" value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Ngày sinh</label>
+              <input className="input-field" type="date" value={form.birthDate}
+                onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, marginTop: 20, alignItems: "center" }}>
@@ -171,47 +299,6 @@ export default function Profile() {
                         {formatPrice(cost)}
                       </div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Đánh giá ── */}
-      {tab === "Đánh giá" && (
-        <div>
-          {myReviews.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <div style={{ fontSize: 48 }}>✍️</div>
-              <p style={{ color: "var(--text-muted)", marginTop: 12 }}>Chưa có đánh giá nào</p>
-              <Link to="/my-reviews" className="btn btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
-                Viết đánh giá ngay
-              </Link>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {myReviews.map((r) => {
-                const tour = mockTours.find((t) => t.tourId === r.tourId);
-                const thumbnail = getTourThumbnail(r.tourId);
-                return (
-                  <div key={r.id} style={{
-                    background: "#fff", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)", padding: 18,
-                    display: "flex", gap: 14,
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    <img src={thumbnail} alt={tour?.name}
-                      style={{ width: 72, height: 54, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <Link to={`/tours/${tour?.tourId}`} style={{ fontWeight: 700, fontSize: 14, color: "var(--text)", textDecoration: "none" }}>
-                        {tour?.name}
-                      </Link>
-                      <StarRating rating={r.rating} size={13} style={{ margin: "4px 0" }} />
-                      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>{r.comment}</p>
-                    </div>
-                    <div style={{ fontSize: 12, color: "var(--text-light)", flexShrink: 0 }}>{r.createdAt}</div>
                   </div>
                 );
               })}

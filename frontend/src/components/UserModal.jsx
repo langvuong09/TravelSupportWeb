@@ -36,6 +36,13 @@ export default function UserModal({ mode, data, onSave, onClose }) {
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className="form-field"
         />
+        <input
+          type="password"
+          placeholder="Mật khẩu"
+          value={formData.password || ""}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          className="form-field"
+        />
         <div className="form-select">
           <select
             value={formData.role || ""}

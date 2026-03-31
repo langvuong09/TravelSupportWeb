@@ -14,7 +14,6 @@ const USER_NAV = [
   { path: "/locations",    label: "Địa điểm",   icon: <Ic.Map /> },
   { path: "/create-tour",  label: "Tạo tour",   icon: <Ic.Plus /> },
   { path: "/my-bookings",  label: "Tours list",   icon: <Ic.Bookmark /> },
-  { path: "/my-reviews",   label: "Đánh giá",   icon: <Ic.Review /> },
 ];
 
 export default function Navbar() {

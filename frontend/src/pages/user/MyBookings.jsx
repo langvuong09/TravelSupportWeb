@@ -43,9 +43,6 @@ export default function MyBookings() {
                   </h3>
                   <p style={{ fontSize: 13, color: "var(--text-muted)" }}>ID: {b.tourId}</p>
                 </div>
-                <div style={{ background: "#dbeafe", color: "#0284c7", padding: "6px 12px", borderRadius: "var(--radius-sm)", fontSize: "12px", fontWeight: 700 }}>
-                  ✓ Đã xác nhận
-                </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 16, padding: "12px 0", borderTop: "1px solid var(--border-light)", borderBottom: "1px solid var(--border-light)" }}>

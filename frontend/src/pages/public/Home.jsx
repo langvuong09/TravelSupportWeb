@@ -155,32 +155,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Reviews ── */}
-      <section className="section container">
-        <div style={{ marginBottom: 24 }}>
-          <h2 className="section-title">Khách hàng nói gì</h2>
-          <p className="section-sub">Đánh giá thật từ những chuyến đi thật</p>
-        </div>
-        <div className="reviews-grid stagger">
-          {recentReviews.map((r) => {
-            const u    = getUserById(r.userId);
-            const name = getFullName(u);
-            return (
-              <div key={r.id} className="review-card card anim-fadeUp">
-                <div className="review-header">
-                  <div className="review-avatar">{name[0]}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{name}</div>
-                    <StarRating rating={r.rating} size={13} />
-                  </div>
-                  <div style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-light)" }}>{r.createdAt}</div>
-                </div>
-                <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{r.comment}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       {/* ── CTA ── */}
       <section className="cta-section">

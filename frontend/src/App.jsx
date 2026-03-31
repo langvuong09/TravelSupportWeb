@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { BookingProvider } from "./context/BookingContext";
 import Navbar from "./components/Navbar";
-import AdminNavbar from "./components/AdminNavbar";
 
 import Home           from "./pages/public/Home";
 import Locations      from "./pages/public/Locations";
@@ -12,7 +11,6 @@ import Register       from "./pages/public/Register";
 
 import BookingForm from "./pages/user/BookingForm";
 import MyBookings  from "./pages/user/MyBookings";
-import MyReviews   from "./pages/user/MyReviews";
 import Profile     from "./pages/user/Profile";
 import CreateTour  from "./pages/user/CreateTour";
 
@@ -61,8 +59,7 @@ function Layout({ children }) {
 function AdminLayout({ children }) {
   return (
     <>
-      <AdminNavbar />
-      <main>{children}</main>
+      {children}
     </>
   );
 }
@@ -80,7 +77,6 @@ function AppRoutes() {
       <Route path="/create-tour"  element={<Layout><RequireUser><CreateTour /></RequireUser></Layout>} />
       <Route path="/book/:tourId" element={<Layout><RequireUser><BookingForm /></RequireUser></Layout>} />
       <Route path="/my-bookings"  element={<Layout><RequireUser><MyBookings /></RequireUser></Layout>} />
-      <Route path="/my-reviews"   element={<Layout><RequireUser><MyReviews /></RequireUser></Layout>} />
       <Route path="/profile"      element={<Layout><RequireAuth><Profile /></RequireAuth></Layout>} />
 
       <Route path="/admin/*"    element={<AdminLayout><RequireAdmin><AdminPages /></RequireAdmin></AdminLayout>} />

@@ -15,12 +15,6 @@ export default function ProvinceModal({ mode, data, onSave, onClose }) {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="form-field"
         />
-        <textarea
-          placeholder="Mô tả"
-          value={formData.description || ""}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="form-textarea"
-        />
         <div className="form-actions">
           <button onClick={onClose} className="btn btn-outline">Huỷ</button>
           <button onClick={() => onSave(formData)} className="btn btn-primary">Lưu</button>
