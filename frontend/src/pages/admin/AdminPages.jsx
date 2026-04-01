@@ -201,10 +201,9 @@ function AdminLocations() {
             {types.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </SearchBar>
-        <Tbl headers={["Địa điểm", "Tỉnh", "Loại", "Chi phí", "Tọa độ", "Thời điểm đẹp", "Tours", ""]} empty={filtered.length === 0}>
+        <Tbl headers={["Địa điểm", "Tỉnh", "Loại", "Chi phí", "Thời điểm đẹp", ""]} empty={filtered.length === 0}>
           {filtered.map((loc) => {
             const prov  = getProvince(loc.provinceId);
-            const tours = mockTourLocations.filter((tl) => tl.locationId === loc.locationId).length;
             return (
               <Tr key={loc.locationId}>
                 <Td>
@@ -219,9 +218,7 @@ function AdminLocations() {
                 <Td><Badge color="blue">{prov?.name}</Badge></Td>
                 <Td><Badge color={typeColors[loc.type] || "gray"}>{loc.type}</Badge></Td>
                 <Td style={{ fontWeight: 700, color: "var(--primary)" }}>{formatPrice(loc.estimatedCost)}</Td>
-                <Td style={{ fontFamily: "monospace", fontSize: 11, color: "var(--text-muted)" }}>{loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}</Td>
                 <Td style={{ fontSize: 12 }}>{loc.bestTimeToVisit}</Td>
-                <Td><Badge color={tours > 0 ? "green" : "gray"}>{tours}</Badge></Td>
                 <Td>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => handleEditClick(loc)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
@@ -436,10 +433,9 @@ function AdminFoods() {
             {mockProvinces.map((p) => <option key={p.provinceId} value={p.name}>{p.name}</option>)}
           </select>
         </SearchBar>
-        <Tbl headers={["Tên món", "Tỉnh", "Loại", "Giá ước tính", "Tọa độ", "Tour có mặt", ""]} empty={filtered.length === 0}>
+        <Tbl headers={["Tên món", "Tỉnh", "Loại", "Giá ước tính", ""]} empty={filtered.length === 0}>
           {filtered.map((f) => {
             const prov  = getProvince(f.provinceId);
-            const tours = mockTourFoods.filter((tf) => tf.foodId === f.foodId).length;
             return (
               <Tr key={f.foodId}>
                 <Td>
@@ -454,8 +450,6 @@ function AdminFoods() {
                 <Td><Badge color="blue">{prov?.name}</Badge></Td>
                 <Td><Badge color={typeColors[f.type] || "gray"}>{f.type}</Badge></Td>
                 <Td style={{ fontWeight: 700 }}>{formatPrice(f.estimatedPrice)}</Td>
-                <Td style={{ fontFamily: "monospace", fontSize: 11, color: "var(--text-muted)" }}>{f.latitude?.toFixed(4)}, {f.longitude?.toFixed(4)}</Td>
-                <Td><Badge color={tours > 0 ? "green" : "gray"}>{tours} tour</Badge></Td>
                 <Td>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => handleEditClick(f)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
@@ -809,7 +803,7 @@ export default function AdminPages() {
         display: "flex", flexDirection: "column",
         position: "sticky", top: 0, height: "100vh", overflowY: "auto",
       }}>
-        <button onClick={() => setTab("dashboard")} style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border-light)", display: "flex", alignItems: "center", gap: 10, border: "none", background: "transparent", cursor: "pointer", transition: "all .2s" }}
+        <button onClick={() => nav("/")} style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border-light)", display: "flex", alignItems: "center", gap: 10, border: "none", background: "transparent", cursor: "pointer", transition: "all .2s" }}
           onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-light)"}
           onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
           <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🛡️</div>

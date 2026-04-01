@@ -24,8 +24,6 @@ export default function Navbar() {
 
   const navItems = !user
     ? PUBLIC_NAV
-    : user.role === "ADMIN"
-    ? []
     : USER_NAV;
 
   const handleLogout = () => {
@@ -80,6 +78,14 @@ export default function Navbar() {
                   <Link to="/profile" className="dropdown-item" onClick={() => setMenuOpen(false)}>
                     <Ic.User /> Hồ sơ cá nhân
                   </Link>
+                  {user.role === "ADMIN" && (
+                    <>
+                      <div className="dropdown-divider" />
+                      <Link to="/admin" className="dropdown-item" onClick={() => setMenuOpen(false)}>
+                        <Ic.Dashboard /> Quản lý Admin
+                      </Link>
+                    </>
+                  )}
                   {user.role === "USER" && (
                     <>
                       <Link to="/create-tour" className="dropdown-item" onClick={() => setMenuOpen(false)}>
