@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequestMapping("/api")
 // Cho phép cả localhost:3000 (dev) và bất kỳ origin nào (production)
@@ -29,6 +30,7 @@ public class AuthController {
                 "firstName", user.getFirstName() != null ? user.getFirstName() : "",
                 "lastName",  user.getLastName()  != null ? user.getLastName()  : "",
                 "email",     user.getEmail()     != null ? user.getEmail()     : "",
+                "image",     user.getImage()     != null ? user.getImage()     : "",
                 "role",      user.getRole()      != null ? user.getRole()      : "USER"
             )
         );
@@ -42,6 +44,7 @@ public class AuthController {
         String email     = body.get("email");
         String phone     = body.get("phone");
         String birthDate = body.get("birthDate");
+        String image     = body.get("image");
 
         if (username == null || username.isBlank()) {
             return Map.of("error", "username_required");
@@ -57,7 +60,8 @@ public class AuthController {
         // Luôn tạo với role USER (không nhận role từ client)
         var user = authService.register(
             username.trim(), password,
-            fullName, email, phone, birthDate
+            fullName, email, phone, birthDate,
+            image
         );
 
         return Map.of(
@@ -65,6 +69,7 @@ public class AuthController {
             "user", Map.of(
                 "id",       user.getId(),
                 "username", user.getUsername(),
+                "image",    user.getImage() != null ? user.getImage() : "",
                 "role",     user.getRole()
             )
         );

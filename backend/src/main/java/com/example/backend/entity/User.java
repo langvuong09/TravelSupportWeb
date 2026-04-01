@@ -22,6 +22,7 @@ public class User {
     private String phone;
     private String birthDate;
     private String role = "USER";
+    private String image;
 
     public User() {}
 
@@ -48,6 +49,9 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
     // getter & setter
     public Long getId() { return id; }
