@@ -16,6 +16,8 @@ export default function LocationModal({ mode, data, onSave, onClose }) {
       })      
     .catch(err => console.error(err));
   }, []);
+
+  
   return (
     <FormModal title={mode === "add" ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"} onClose={onClose}>
       <div className="form-modal__fields">
