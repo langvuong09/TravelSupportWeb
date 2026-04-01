@@ -33,7 +33,8 @@ public class AuthService {
      */
     public User register(String username, String password,
                          String fullName, String email,
-                         String phone, String birthDate) {
+                         String phone, String birthDate,
+                         String image) {
         User u = new User();
         u.setUsername(username);
         u.setPassword(password);
@@ -54,6 +55,7 @@ public class AuthService {
         u.setPhone(phone);
         u.setBirthDate(birthDate);
         u.setRole("USER"); // Luôn USER, không nhận từ client
+        u.setImage(image);
 
         return userRepository.save(u);
     }
