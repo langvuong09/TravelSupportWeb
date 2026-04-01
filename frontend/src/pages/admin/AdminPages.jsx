@@ -278,11 +278,6 @@ function AdminUsers() {
     u.username.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddClick = () => {
-    setFormData({ firstName: "", lastName: "", username: "", email: "", role: "USER" });
-    setModal("add");
-  };
-
   const handleEditClick = (u) => {
     setFormData({ ...u });
     setModal("edit");
@@ -293,14 +288,8 @@ function AdminUsers() {
       setToast({ message: "Vui lòng điền đầy đủ thông tin", type: "error" });
       return;
     }
-    if (modal === "add") {
-      const newId = Math.max(...users.map(u => u.userId || 0), 0) + 1;
-      setUsers([...users, { ...formData, userId: newId }]);
-      setToast({ message: "✅ Thêm người dùng thành công", type: "success" });
-    } else {
-      setUsers(users.map(u => u.userId === formData.userId ? formData : u));
-      setToast({ message: "✅ Cập nhật người dùng thành công", type: "success" });
-    }
+    setUsers(users.map(u => u.userId === formData.userId ? formData : u));
+    setToast({ message: "✅ Cập nhật người dùng thành công", type: "success" });
     setModal(null);
   };
 
@@ -314,7 +303,6 @@ function AdminUsers() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h2 style={{ fontSize: 22, fontWeight: 800 }}>Quản lý Người dùng</h2>
-        <button onClick={handleAddClick} className="btn btn-primary btn-sm">+ Thêm user</button>
       </div>
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
         <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên, email, username..." />
@@ -821,13 +809,15 @@ export default function AdminPages() {
         display: "flex", flexDirection: "column",
         position: "sticky", top: 0, height: "100vh", overflowY: "auto",
       }}>
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border-light)", display: "flex", alignItems: "center", gap: 10 }}>
+        <button onClick={() => setTab("dashboard")} style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border-light)", display: "flex", alignItems: "center", gap: 10, border: "none", background: "transparent", cursor: "pointer", transition: "all .2s" }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "var(--primary-light)"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
           <div style={{ width: 36, height: 36, borderRadius: "var(--radius-sm)", background: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🛡️</div>
-          <div>
+          <div style={{ textAlign: "left" }}>
             <div style={{ fontWeight: 900, fontSize: 14, color: "var(--primary)" }}>Admin Panel</div>
             <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Travel VN</div>
           </div>
-        </div>
+        </button>
 
         <nav style={{ padding: "12px 8px", flex: 1 }}>
           {NAV_ITEMS.map((n) => (

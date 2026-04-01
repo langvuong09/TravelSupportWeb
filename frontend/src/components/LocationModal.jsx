@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect,useState } from "react";
 import FormModal from "./FormModal";
 import { mockProvinces } from "../data/mockData";
 import "../styles/AdminModal.css";
@@ -6,7 +6,16 @@ import "../styles/AdminModal.css";
 export default function LocationModal({ mode, data, onSave, onClose }) {
   const [formData, setFormData] = useState(data || {});
   const types = ["Thiên nhiên", "Văn hóa", "Biển đảo", "Nghỉ dưỡng", "Giải trí"];
+  const [provinces, setProvinces] = useState([]);
 
+  useEffect(() => {
+    fetch("http://localhost:8080/api/provinces")
+      .then(res => res.json())
+      .then(data => {
+        setProvinces(data);
+      })      
+    .catch(err => console.error(err));
+  }, []);
   return (
     <FormModal title={mode === "add" ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"} onClose={onClose}>
       <div className="form-modal__fields">
@@ -37,11 +46,20 @@ export default function LocationModal({ mode, data, onSave, onClose }) {
         <div className="form-select">
           <select
             value={formData.provinceId || ""}
-            onChange={(e) => setFormData({ ...formData, provinceId: parseInt(e.target.value) })}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              setFormData({
+                ...formData,
+                provinceId: value ? parseInt(value) : null
+              });
+            }}
           >
             <option value="">Chọn tỉnh</option>
-            {mockProvinces.map((p) => (
-              <option key={p.provinceId} value={p.provinceId}>{p.name}</option>
+            {provinces.map((p) => (
+              <option key={p.provinceId} value={p.provinceId}>
+                {p.name}
+              </option>
             ))}
           </select>
         </div>
