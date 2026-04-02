@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/provinces")
 public class ProvinceController {
@@ -22,4 +21,13 @@ public class ProvinceController {
 
     @PostMapping
     public Province create(@RequestBody Province p) { return repo.save(p); }
+    
+        @PutMapping("/{id}")
+        public Province update(@PathVariable Integer id, @RequestBody Province p) {
+            p.setProvinceId(id);
+            return repo.save(p);
+        }
+
+        @DeleteMapping("/{id}")
+        public void delete(@PathVariable Integer id) { repo.deleteById(id); }
 }

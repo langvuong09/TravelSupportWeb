@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api")
 // Cho phép cả localhost:3000 (dev) và bất kỳ origin nào (production)
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired

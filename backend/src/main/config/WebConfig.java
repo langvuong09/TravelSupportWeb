@@ -12,10 +12,15 @@ public class WebConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");   // Cho phép mọi origin (dev)
+        // Allow the frontend origin. Use explicit origin when credentials are allowed.
+        config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
-        config.setAllowCredentials(false);
+        // If your frontend sends cookies / auth headers, enable credentials. Otherwise false is fine.
+        config.setAllowCredentials(true);
+        // Expose common headers to the browser
+        config.addExposedHeader("Authorization");
+        config.addExposedHeader("Content-Type");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

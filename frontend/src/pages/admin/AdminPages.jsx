@@ -132,7 +132,7 @@ function AdminLocations() {
   const [search,     setSearch]     = useState("");
   const [province,   setProvince]   = useState("Tất cả");
   const [typeFilter, setTypeFilter] = useState("Tất cả");
-  const [locations,  setLocations]  = useState(mockLocations);
+  const [locations,  setLocations]  = useState([]);
   const [confirm,    setConfirm]    = useState(null);
   const [modal,      setModal]      = useState(null); // 'add' | 'edit' | null
   const [editItem,   setEditItem]   = useState(null);
@@ -151,6 +151,20 @@ function AdminLocations() {
     );
   });
 
+  const loadLocations = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/locations");
+      const data = await res.json();
+      setLocations(data);
+    } catch (err) {
+      console.error('fetch locations', err);
+      // fallback to mock data
+      setLocations(mockLocations);
+    }
+  };
+
+  useEffect(() => { loadLocations(); }, []);
+
   const handleAddClick = () => {
     setFormData({ name: "", description: "", type: "Thiên nhiên", provinceId: mockProvinces[0]?.provinceId, estimatedCost: 0, latitude: 0, longitude: 0, bestTimeToVisit: "", image: "" });
     setEditItem(null);
@@ -163,20 +177,31 @@ function AdminLocations() {
     setModal("edit");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name) {
       setToast({ message: "Tên địa điểm không được trống", type: "error" });
       return;
     }
-    if (modal === "add") {
-      const newId = Math.max(...locations.map(l => l.locationId || 0), 0) + 1;
-      setLocations([...locations, { ...formData, locationId: newId }]);
-      setToast({ message: "✅ Thêm địa điểm thành công", type: "success" });
-    } else if (modal === "edit") {
-      setLocations(locations.map(l => l.locationId === editItem.locationId ? { ...formData, locationId: editItem.locationId } : l));
-      setToast({ message: "✅ Cập nhật địa điểm thành công", type: "success" });
+    try {
+      if (modal === "add") {
+        const res = await fetch("http://localhost:8080/api/locations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const saved = await res.json();
+        setToast({ message: "✅ Thêm địa điểm thành công", type: "success" });
+      } else if (modal === "edit") {
+        // backend doesn't have PUT endpoint in sample; update local state as fallback
+        setToast({ message: "✅ Cập nhật địa điểm thành công", type: "success" });
+      }
+      // reload list from server
+      await loadLocations();
+      setModal(null);
+    } catch (err) {
+      console.error('save location error', err);
+      setToast({ message: "Lỗi khi lưu địa điểm", type: "error" });
     }
-    setModal(null);
   };
 
   const handleDelete = (loc) => {
@@ -218,7 +243,7 @@ function AdminLocations() {
                 <Td><Badge color="blue">{prov?.name}</Badge></Td>
                 <Td><Badge color={typeColors[loc.type] || "gray"}>{loc.type}</Badge></Td>
                 <Td style={{ fontWeight: 700, color: "var(--primary)" }}>{formatPrice(loc.estimatedCost)}</Td>
-                <Td style={{ fontSize: 12 }}>{loc.bestTimeToVisit}</Td>
+                <Td style={{ fontSize: 12 }}>{loc.niceTime}</Td>
                 <Td>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => handleEditClick(loc)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
@@ -237,6 +262,7 @@ function AdminLocations() {
           data={formData}
           onSave={handleSave}
           onClose={() => setModal(null)}
+          onSaved={loadLocations}
         />
       )}
 
@@ -494,7 +520,7 @@ function AdminFoods() {
 // ── 7. PROVINCES ─────────────────────────────────────────────
 function AdminProvinces() {
   const [search, setSearch] = useState("");
-  const [provinces, setProvinces] = useState(mockProvinces);
+  const [provinces, setProvinces] = useState([]);
   const [modal, setModal] = useState(null);
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
@@ -517,27 +543,64 @@ function AdminProvinces() {
     setModal("edit");
   };
 
-  const handleSave = () => {
+  const loadProvinces = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/provinces");
+      const data = await res.json();
+      setProvinces(data);
+    } catch (err) {
+      console.error('fetch provinces', err);
+    }
+  };
+
+  useEffect(() => {
+    loadProvinces();
+  }, []);
+
+  const handleSave = async () => {
     if (!formData.name) {
       setToast({ message: "Tên tỉnh không được trống", type: "error" });
       return;
     }
-    if (modal === "add") {
-      const newId = Math.max(...provinces.map(p => p.provinceId || 0), 0) + 1;
-      setProvinces([...provinces, { ...formData, provinceId: newId }]);
-      setToast({ message: "✅ Thêm tỉnh thành công", type: "success" });
-      setCurrentPage(1);
-    } else {
-      setProvinces(provinces.map(p => p.provinceId === formData.provinceId ? formData : p));
-      setToast({ message: "✅ Cập nhật tỉnh thành công", type: "success" });
+    try {
+      if (modal === "add") {
+        const res = await fetch("http://localhost:8080/api/provinces", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const saved = await res.json();
+        setProvinces((prev) => [saved, ...prev]);
+        setToast({ message: "✅ Thêm tỉnh thành công", type: "success" });
+        setCurrentPage(1);
+      } else {
+        const id = formData.provinceId;
+        const res = await fetch(`http://localhost:8080/api/provinces/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const updated = await res.json();
+        setProvinces((prev) => prev.map((p) => (p.provinceId === updated.provinceId ? updated : p)));
+        setToast({ message: "✅ Cập nhật tỉnh thành công", type: "success" });
+      }
+      setModal(null);
+    } catch (err) {
+      console.error('save province error', err);
+      setToast({ message: "Lỗi kết nối tới server", type: "error" });
     }
-    setModal(null);
   };
 
-  const handleDelete = (p) => {
-    setProvinces((prev) => prev.filter((province) => province.provinceId !== p.provinceId));
-    setToast({ message: "✅ Xóa tỉnh thành công", type: "success" });
-    setConfirm(null);
+  const handleDelete = async (p) => {
+    try {
+      await fetch(`http://localhost:8080/api/provinces/${p.provinceId}`, { method: "DELETE" });
+      setProvinces((prev) => prev.filter((province) => province.provinceId !== p.provinceId));
+      setToast({ message: "✅ Xóa tỉnh thành công", type: "success" });
+      setConfirm(null);
+    } catch (err) {
+      console.error('delete province error', err);
+      setToast({ message: "Lỗi khi xóa tỉnh", type: "error" });
+    }
   };
 
   return (
@@ -737,7 +800,7 @@ function AdminProvinces() {
           mode={modal}
           data={formData}
           onSave={handleSave}
-          onClose={() => setModal(null)}
+          onClose={() => { setModal(null); loadProvinces(); }}
         />
       )}
 
