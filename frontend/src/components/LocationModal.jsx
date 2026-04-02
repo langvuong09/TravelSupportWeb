@@ -3,7 +3,7 @@ import FormModal from "./FormModal";
 import { mockProvinces } from "../data/mockData";
 import "../styles/AdminModal.css";
 
-export default function LocationModal({ mode, data, onSave, onClose }) {
+export default function LocationModal({ mode, data, onSave, onClose, onSaved }) {
   const [formData, setFormData] = useState(data || {});
   const types = ["Thiên nhiên", "Văn hóa", "Biển đảo", "Nghỉ dưỡng", "Giải trí"];
   const [provinces, setProvinces] = useState([]);
@@ -16,6 +16,46 @@ export default function LocationModal({ mode, data, onSave, onClose }) {
       })      
     .catch(err => console.error(err));
   }, []);
+  useEffect(() => {
+    setFormData(data || {});
+  }, [data]);
+
+  const handleSave = async () => {
+    // basic validation
+    if (!formData.name || !formData.provinceId) {
+      console.error('Tên địa điểm và tỉnh không được để trống');
+      return;
+    }
+
+    // prepare payload matching backend entity fields
+    const payload = {
+      ...(formData.locationId ? { locationId: formData.locationId } : {}),
+      provinceId: formData.provinceId ? Number(formData.provinceId) : null,
+      name: formData.name,
+      description: formData.description || null,
+      estimatedCost: formData.estimatedCost ? Number(formData.estimatedCost) : null,
+      image: formData.image || null,
+      latitude: formData.latitude || null,
+      longitude: formData.longitude || null,
+      type: formData.type || null,
+      niceTime: formData.niceTime || null,
+    };
+
+    try {
+      const res = await fetch('http://localhost:8080/api/locations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Network response was not ok');
+      const saved = await res.json();
+      if (onSaved) onSaved(saved);
+      if (onSave) onSave(saved);
+      onClose();
+    } catch (err) {
+      console.error('Lưu địa điểm thất bại', err);
+    }
+  };
   return (
     <FormModal title={mode === "add" ? "Thêm địa điểm mới" : "Chỉnh sửa địa điểm"} onClose={onClose}>
       <div className="form-modal__fields">
@@ -73,8 +113,8 @@ export default function LocationModal({ mode, data, onSave, onClose }) {
         <input
           type="text"
           placeholder="Thời điểm đẹp nhất"
-          value={formData.bestTimeToVisit || ""}
-          onChange={(e) => setFormData({ ...formData, bestTimeToVisit: e.target.value })}
+          value={formData.niceTime || ""}
+          onChange={(e) => setFormData({ ...formData, niceTime: e.target.value })}
           className="form-field"
         />
         <input
@@ -86,7 +126,7 @@ export default function LocationModal({ mode, data, onSave, onClose }) {
         />
         <div className="form-actions">
           <button onClick={onClose} className="btn btn-outline">Huỷ</button>
-          <button onClick={() => onSave(formData)} className="btn btn-primary">Lưu</button>
+          <button onClick={handleSave} className="btn btn-primary">Lưu</button>
         </div>
       </div>
     </FormModal>

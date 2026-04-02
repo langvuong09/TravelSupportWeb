@@ -190,10 +190,10 @@ function AdminLocations() {
           body: JSON.stringify(formData),
         });
         const saved = await res.json();
-        setToast({ message: "✅ Thêm địa điểm thành công", type: "success" });
+        setToast({ message: "Thêm địa điểm thành công", type: "success" });
       } else if (modal === "edit") {
         // backend doesn't have PUT endpoint in sample; update local state as fallback
-        setToast({ message: "✅ Cập nhật địa điểm thành công", type: "success" });
+        setToast({ message: "Cập nhật địa điểm thành công", type: "success" });
       }
       // reload list from server
       await loadLocations();
@@ -204,10 +204,18 @@ function AdminLocations() {
     }
   };
 
-  const handleDelete = (loc) => {
-    setLocations((p) => p.filter((l) => l.locationId !== loc.locationId));
-    setToast({ message: "✅ Xoá địa điểm thành công", type: "success" });
-    setConfirm(null);
+  const handleDelete = async (loc) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/locations/${loc.locationId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      setLocations((p) => p.filter((l) => l.locationId !== loc.locationId));
+      setToast({ message: "✅ Xoá địa điểm thành công", type: "success" });
+    } catch (err) {
+      console.error('delete location error', err);
+      setToast({ message: "Lỗi khi xóa địa điểm", type: "error" });
+    } finally {
+      setConfirm(null);
+    }
   };
 
   return (

@@ -15,10 +15,15 @@ public class LocationController {
 
     @GetMapping
     public List<Location> all() { return repo.findAll(); }
+    @GetMapping("/{id}")
+    public Location get(@PathVariable Integer id) { return repo.findById(id).orElse(null); }
 
     @GetMapping("/by-province/{provinceId}")
     public List<Location> byProvince(@PathVariable Integer provinceId) { return repo.findByProvinceId(provinceId); }
 
     @PostMapping
     public Location create(@RequestBody Location l) { return repo.save(l); }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Integer id) { repo.deleteById(id); }
 }
