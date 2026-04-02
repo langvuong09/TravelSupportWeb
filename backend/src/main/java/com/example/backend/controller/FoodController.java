@@ -16,9 +16,30 @@ public class FoodController {
     @GetMapping
     public List<Food> all() { return repo.findAll(); }
 
-    @GetMapping("/by-province/{provinceId}")
-    public List<Food> byProvince(@PathVariable Integer provinceId) { return repo.findByProvinceId(provinceId); }
+    @GetMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Food> getById(@PathVariable Integer id) {
+        return repo.findById(id)
+            .map(org.springframework.http.ResponseEntity::ok)
+            .orElse(org.springframework.http.ResponseEntity.notFound().build());
+    }
 
     @PostMapping
     public Food create(@RequestBody Food f) { return repo.save(f); }
+
+    @PutMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Food> update(@PathVariable Integer id, @RequestBody Food f) {
+        return repo.findById(id).map(existing -> {
+            f.setFoodId(id);
+            Food saved = repo.save(f);
+            return org.springframework.http.ResponseEntity.ok(saved);
+        }).orElseGet(() -> org.springframework.http.ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Void> delete(@PathVariable Integer id) {
+        return repo.findById(id).map(existing -> {
+            repo.deleteById(id);
+            return org.springframework.http.ResponseEntity.ok().<Void>build();
+        }).orElseGet(() -> org.springframework.http.ResponseEntity.notFound().build());
+    }
 }

@@ -16,4 +16,7 @@ public class Province {
 
     @Column(nullable = false)
     private String name;
+
+    private Double latitude;
+    private Double longitude;
 }

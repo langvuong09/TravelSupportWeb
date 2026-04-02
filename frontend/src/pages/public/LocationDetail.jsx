@@ -73,7 +73,6 @@ export default function LocationDetail() {
               ["📍", "Tỉnh/thành",         province?.name || "—"],
               ["🕐", "Thời điểm lý tưởng", loc.bestTimeToVisit],
               ["💰", "Chi phí ước tính",   formatPrice(loc.estimatedCost) + "/người"],
-              ["🗺️", "Tọa độ",             `${loc.latitude?.toFixed(4)}, ${loc.longitude?.toFixed(4)}`],
             ].map(([e, l, v]) => (
               <div key={l} style={{
                 background: "#fff", border: "1px solid var(--border)",

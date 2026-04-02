@@ -35,8 +35,6 @@ export default function LocationModal({ mode, data, onSave, onClose, onSaved }) 
       description: formData.description || null,
       estimatedCost: formData.estimatedCost ? Number(formData.estimatedCost) : null,
       image: formData.image || null,
-      latitude: formData.latitude || null,
-      longitude: formData.longitude || null,
       type: formData.type || null,
       niceTime: formData.niceTime || null,
     };

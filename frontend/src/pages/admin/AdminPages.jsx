@@ -166,7 +166,7 @@ function AdminLocations() {
   useEffect(() => { loadLocations(); }, []);
 
   const handleAddClick = () => {
-    setFormData({ name: "", description: "", type: "Thiên nhiên", provinceId: mockProvinces[0]?.provinceId, estimatedCost: 0, latitude: 0, longitude: 0, bestTimeToVisit: "", image: "" });
+    setFormData({ name: "", description: "", type: "Thiên nhiên", provinceId: mockProvinces[0]?.provinceId, estimatedCost: 0, bestTimeToVisit: "", image: "" });
     setEditItem(null);
     setModal("add");
   };
@@ -408,7 +408,7 @@ function AdminUsers() {
 function AdminFoods() {
   const [search,   setSearch]   = useState("");
   const [province, setProvince] = useState("Tất cả");
-  const [foods,    setFoods]    = useState(mockFoods);
+  const [foods,    setFoods]    = useState([]);
   const [confirm,  setConfirm]  = useState(null);
   const [modal,    setModal]    = useState(null);
   const [formData, setFormData] = useState({});
@@ -416,14 +416,29 @@ function AdminFoods() {
 
   const typeColors = { "Đặc sản": "yellow", "Hải sản": "blue", "Chay": "green", "Street food": "red", "Tráng miệng": "purple" };
   const foodTypes = ["Đặc sản", "Hải sản", "Chay", "Street food", "Tráng miệng"];
-  
+
   const filtered = foods.filter((f) => {
     const prov = getProvince(f.provinceId);
     return f.name.toLowerCase().includes(search.toLowerCase()) && (province === "Tất cả" || prov?.name === province);
   });
 
+  const loadFoods = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/foods");
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+      setFoods(data || []);
+    } catch (err) {
+      console.error('fetch foods', err);
+      // fallback to mock data if backend not available
+      setFoods(mockFoods);
+    }
+  };
+
+  useEffect(() => { loadFoods(); }, []);
+
   const handleAddClick = () => {
-    setFormData({ name: "", description: "", type: "Đặc sản", provinceId: mockProvinces[0]?.provinceId, estimatedPrice: 0, latitude: 0, longitude: 0, image: "" });
+    setFormData({ name: "", description: "", type: "Đặc sản", provinceId: mockProvinces[0]?.provinceId, estimatedPrice: 0, image: "" });
     setModal("add");
   };
 
@@ -432,26 +447,51 @@ function AdminFoods() {
     setModal("edit");
   };
 
-  const handleSave = () => {
-    if (!formData.name) {
+  const handleSave = async (payload) => {
+    const payloadToSave = payload || formData;
+    if (!payloadToSave || !payloadToSave.name) {
       setToast({ message: "Tên món ăn không được trống", type: "error" });
       return;
     }
-    if (modal === "add") {
-      const newId = Math.max(...foods.map(f => f.foodId || 0), 0) + 1;
-      setFoods([...foods, { ...formData, foodId: newId }]);
-      setToast({ message: "✅ Thêm món ăn thành công", type: "success" });
-    } else {
-      setFoods(foods.map(f => f.foodId === formData.foodId ? formData : f));
-      setToast({ message: "✅ Cập nhật món ăn thành công", type: "success" });
+    try {
+      if (modal === "add") {
+        const res = await fetch("http://localhost:8080/api/foods", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadToSave),
+        });
+        if (!res.ok) throw new Error('Create failed');
+        setToast({ message: "✅ Thêm món ăn thành công", type: "success" });
+      } else if (modal === "edit") {
+        const id = payloadToSave.foodId;
+        const res = await fetch(`http://localhost:8080/api/foods/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadToSave),
+        });
+        if (!res.ok) throw new Error('Update failed');
+        setToast({ message: "✅ Cập nhật món ăn thành công", type: "success" });
+      }
+      await loadFoods();
+      setModal(null);
+    } catch (err) {
+      console.error('save food error', err);
+      setToast({ message: "Lỗi khi lưu món ăn", type: "error" });
     }
-    setModal(null);
   };
 
-  const handleDelete = (f) => {
-    setFoods((p) => p.filter((food) => food.foodId !== f.foodId));
-    setToast({ message: "✅ Xoá món ăn thành công", type: "success" });
-    setConfirm(null);
+  const handleDelete = async (f) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/foods/${f.foodId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      setToast({ message: "✅ Xoá món ăn thành công", type: "success" });
+      await loadFoods();
+    } catch (err) {
+      console.error('delete food error', err);
+      setToast({ message: "Lỗi khi xóa món ăn", type: "error" });
+    } finally {
+      setConfirm(null);
+    }
   };
 
   return (

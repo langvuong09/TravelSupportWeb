@@ -25,8 +25,5 @@ public class Food {
 
     private String type;
 
-    private Double latitude;
-    private Double longitude;
-
     private Integer provinceId;
 }

@@ -1,11 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FormModal from "./FormModal";
 import { mockProvinces } from "../data/mockData";
 import "../styles/AdminModal.css";
 
 export default function FoodModal({ mode, data, onSave, onClose }) {
   const [formData, setFormData] = useState(data || {});
-  const foodTypes = ["Đặc sản", "Hải sản", "Chay", "Street food", "Tráng miệng"];
+  const [provinces, setProvinces] = useState([]);
+
+  useEffect(() => {
+      fetch("http://localhost:8080/api/provinces")
+        .then(res => res.json())
+        .then(data => {
+          setProvinces(data);
+        })      
+      .catch(err => console.error(err));
+    }, []);
+  useEffect(() => {
+    setFormData(data || {});
+  }, [data]);
+
+  const foodTypes = ["nhà hàng", "quán bình dân", "quán nước", "phố ẩm thực", "quán ăn vặt", "quán ăn nhanh"];
 
   return (
     <FormModal title={mode === "add" ? "Thêm món ăn mới" : "Chỉnh sửa món ăn"} onClose={onClose}>
@@ -40,8 +54,10 @@ export default function FoodModal({ mode, data, onSave, onClose }) {
             onChange={(e) => setFormData({ ...formData, provinceId: parseInt(e.target.value) })}
           >
             <option value="">Chọn tỉnh</option>
-            {mockProvinces.map((p) => (
-              <option key={p.provinceId} value={p.provinceId}>{p.name}</option>
+            {provinces.map((p) => (
+              <option key={p.provinceId} value={p.provinceId}>
+                {p.name}
+              </option>
             ))}
           </select>
         </div>
@@ -61,7 +77,18 @@ export default function FoodModal({ mode, data, onSave, onClose }) {
         />
         <div className="form-actions">
           <button onClick={onClose} className="btn btn-outline">Huỷ</button>
-          <button onClick={() => onSave(formData)} className="btn btn-primary">Lưu</button>
+          <button
+            onClick={async () => {
+              try {
+                await onSave(formData);
+                onClose();
+              } catch (err) {
+                // ignore here — parent will set toast on error
+                console.error('FoodModal save error', err);
+              }
+            }}
+            className="btn btn-primary"
+          >Lưu</button>
         </div>
       </div>
     </FormModal>

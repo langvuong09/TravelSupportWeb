@@ -26,9 +26,6 @@ public class Location {
 
     private String image;
 
-    private Double latitude;
-    private Double longitude;
-
     private String type;
 
     private String niceTime;
