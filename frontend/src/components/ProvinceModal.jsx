@@ -1,32 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FormModal from "./FormModal";
 import "../styles/AdminModal.css";
 
-export default function ProvinceModal({ mode, data, onSave, onClose }) {
+export default function ProvinceModal({ mode, data, onSave, onChange, onClose }) {
   const [formData, setFormData] = useState(data || {});
-  const [provinces, setProvinces] = useState([]);
+
+  useEffect(() => {
+    setFormData(data || {});
+  }, [data]);
   
-    const handleSubmit = () => {
-    // POST dữ liệu mới vào backend
-      fetch("http://localhost:8080/api/provinces", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log("Thêm thành công:", data);
-          // Cập nhật lại danh sách provinces
-          setProvinces(prev => [...prev, data]);
-          // reset form
-          setFormData({ name: "" });
-          // đóng modal nếu muốn
-          onClose();
-        })
-        .catch(err => console.error(err));
-    };
+  const handleFormDataChange = (newFormData) => {
+    setFormData(newFormData);
+    if (onChange) {
+      onChange(newFormData);
+    }
+  };
+  
+  const handleSubmit = () => {
+    if (onSave) {
+      onSave(formData);
+    }
+  };
 
   return (
     <FormModal title={mode === "add" ? "Thêm tỉnh mới" : "Chỉnh sửa tỉnh"} onClose={onClose}>
@@ -35,7 +29,7 @@ export default function ProvinceModal({ mode, data, onSave, onClose }) {
           type="text"
           placeholder="Tên tỉnh / thành phố"
           value={formData.name || ""}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => handleFormDataChange({ ...formData, name: e.target.value })}
           className="form-field"
         />
         <div className="form-actions">

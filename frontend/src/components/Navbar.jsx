@@ -4,6 +4,8 @@ import { Ic, Avatar } from "./UI";
 import { useState } from "react";
 import "./Navbar.css";
 
+const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 const PUBLIC_NAV = [
   { path: "/",          label: "Trang chủ", icon: <Ic.Home /> },
   { path: "/locations", label: "Địa điểm",  icon: <Ic.Map /> },
@@ -62,7 +64,7 @@ export default function Navbar() {
           ) : (
             <div className="user-menu">
               <button className="user-trigger" onClick={() => setMenuOpen(!menuOpen)}>
-                <Avatar name={user.fullName || user.username} size={34} />
+                <Avatar name={user.fullName || user.username} size={34} avatarUrl={user.image ? `${API}${user.image}` : null} />
                 <div className="user-info">
                   <span className="user-name">{user.fullName || user.username}</span>
                   <span className="user-role">{user.role}</span>
