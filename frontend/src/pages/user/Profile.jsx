@@ -7,6 +7,8 @@ import {
 } from "../../data/mockData";
 import { Link } from "react-router-dom";
 
+const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
 /* ── Avatar ── */
 function Avatar({ user, size = 80, avatarUrl = null }) {
   const name = getFullName(user);
@@ -44,7 +46,7 @@ function Avatar({ user, size = 80, avatarUrl = null }) {
 const TABS = ["Thông tin"];
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser, changePassword, deleteUserImage } = useAuth();
   const [tab,  setTab]  = useState("Thông tin");
   const [form, setForm] = useState({
     firstName: user?.firstName || "",
@@ -53,17 +55,30 @@ export default function Profile() {
     phone:     user?.phone     || "",
     birthDate: user?.birthDate || "",
   });
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || null);
-  const [changePassword, setChangePassword] = useState({ current: "", new: "", confirm: "" });
+  const [avatarUrl, setAvatarUrl] = useState(user?.image ? `${API}${user.image}` : null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ current: "", new: "", confirm: "" });
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const myBookings = mockBookings.filter((b) => b.userId === user?.userId);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    const result = await updateUser(user.id, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      phone: form.phone,
+      birthDate: form.birthDate,
+      imageFile: avatarFile,
+    });
+    if (result.success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      alert(result.message);
+    }
   };
 
   return (
@@ -125,8 +140,8 @@ export default function Profile() {
                     type="password"
                     placeholder="Nhập mật khẩu hiện tại"
                     className="input-field" 
-                    value={changePassword.current}
-                    onChange={(e) => setChangePassword({ ...changePassword, current: e.target.value })} 
+                    value={passwordForm.current}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} 
                   />
                 </div>
                 <div>
@@ -135,8 +150,8 @@ export default function Profile() {
                     type="password"
                     placeholder="Nhập mật khẩu mới"
                     className="input-field" 
-                    value={changePassword.new}
-                    onChange={(e) => setChangePassword({ ...changePassword, new: e.target.value })} 
+                    value={passwordForm.new}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })} 
                   />
                 </div>
                 <div>
@@ -145,20 +160,26 @@ export default function Profile() {
                     type="password"
                     placeholder="Nhập lại mật khẩu mới"
                     className="input-field" 
-                    value={changePassword.confirm}
-                    onChange={(e) => setChangePassword({ ...changePassword, confirm: e.target.value })} 
+                    value={passwordForm.confirm}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} 
                   />
                 </div>
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
                 <button 
-                  onClick={() => {
-                    if (changePassword.new !== changePassword.confirm) {
+                  onClick={async () => {
+                    if (passwordForm.new !== passwordForm.confirm) {
                       alert("Mật khẩu nhập lại không trùng khớp");
                       return;
                     }
-                    setPasswordSaved(true);
-                    setTimeout(() => { setPasswordSaved(false); setShowChangePassword(false); }, 2000);
+                    const result = await changePassword(user.id, passwordForm.current, passwordForm.new, passwordForm.confirm);
+                    if (result.success) {
+                      setPasswordSaved(true);
+                      setPasswordForm({ current: "", new: "", confirm: "" });
+                      setTimeout(() => { setPasswordSaved(false); setShowChangePassword(false); }, 2000);
+                    } else {
+                      alert(result.message || "Đổi mật khẩu thất bại!");
+                    }
                   }} 
                   className="btn btn-primary"
                 >
@@ -167,7 +188,7 @@ export default function Profile() {
                 <button 
                   onClick={() => {
                     setShowChangePassword(false);
-                    setChangePassword({ current: "", new: "", confirm: "" });
+                    setPasswordForm({ current: "", new: "", confirm: "" });
                   }} 
                   className="btn btn-outline"
                 >
@@ -194,6 +215,7 @@ export default function Profile() {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    setAvatarFile(file);
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                       setAvatarUrl(ev.target?.result);
@@ -206,7 +228,15 @@ export default function Profile() {
               <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>Chọn ảnh JPG, PNG (tối đa 5MB)</p>
               {avatarUrl && (
                 <button 
-                  onClick={() => setAvatarUrl(null)}
+                  onClick={async () => {
+                    const result = await deleteUserImage(user.id);
+                    if (result.success) {
+                      setAvatarUrl(null);
+                      setAvatarFile(null);
+                    } else {
+                      alert(result.message || "Xóa ảnh thất bại!");
+                    }
+                  }}
                   style={{ marginTop: 8, padding: "4px 12px", background: "#fee2e2", border: "none", borderRadius: 6, color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
                 >
                   Xoá ảnh

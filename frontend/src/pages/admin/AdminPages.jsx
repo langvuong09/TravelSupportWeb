@@ -297,16 +297,55 @@ function AdminLocations() {
 // ── 4. USERS ─────────────────────────────────────────────────
 function AdminUsers() {
   const [search,  setSearch]  = useState("");
-  const [users,   setUsers]   = useState(mockUsers);
+  const [users,   setUsers]   = useState([]);
+  const [loading, setLoading] = useState(true);
   const [confirm, setConfirm] = useState(null);
   const [modal,   setModal]   = useState(null);
   const [formData, setFormData] = useState({});
   const [toast,   setToast]   = useState(null);
 
+  const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
+  // Load users from API
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API}/api/admin/users`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Transform API data to match frontend format
+        const transformedUsers = data.users.map(user => ({
+          userId: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          birthDate: user.birthDate,
+          role: user.role,
+          image: user.image
+        }));
+        setUsers(transformedUsers);
+      } else {
+        setToast({ message: "Lỗi tải danh sách người dùng", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+      setToast({ message: "Không thể kết nối đến server", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filtered = users.filter((u) =>
-    getFullName(u).toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.username.toLowerCase().includes(search.toLowerCase())
+    (getFullName(u) || "").toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || "").toLowerCase().includes(search.toLowerCase()) ||
+    (u.username || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEditClick = (u) => {
@@ -314,20 +353,64 @@ function AdminUsers() {
     setModal("edit");
   };
 
-  const handleSave = () => {
-    if (!formData.firstName || !formData.email) {
+  const handleSave = async (updatedFormData) => {
+    const dataToUse = updatedFormData || formData;
+    
+    if (!dataToUse.firstName || !dataToUse.email) {
       setToast({ message: "Vui lòng điền đầy đủ thông tin", type: "error" });
       return;
     }
-    setUsers(users.map(u => u.userId === formData.userId ? formData : u));
-    setToast({ message: "✅ Cập nhật người dùng thành công", type: "success" });
-    setModal(null);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('firstName', dataToUse.firstName);
+      formDataToSend.append('lastName', dataToUse.lastName || '');
+      formDataToSend.append('email', dataToUse.email);
+      formDataToSend.append('phone', dataToUse.phone || '');
+      formDataToSend.append('birthDate', dataToUse.birthDate || '');
+      formDataToSend.append('role', dataToUse.role || 'USER');
+
+      const response = await fetch(`${API}/api/admin/users/${dataToUse.userId}`, {
+        method: 'PUT',
+        body: formDataToSend
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Reload data from server to ensure consistency
+        await loadUsers();
+        setToast({ message: "✅ Cập nhật người dùng thành công", type: "success" });
+        setModal(null);
+      } else {
+        setToast({ message: data.message || "Cập nhật thất bại", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setToast({ message: "Không thể kết nối đến server", type: "error" });
+    }
   };
 
-  const handleDelete = (u) => {
-    setUsers((p) => p.filter((user) => user.userId !== u.userId));
-    setToast({ message: "✅ Xoá người dùng thành công", type: "success" });
-    setConfirm(null);
+  const handleDelete = async (u) => {
+    try {
+      const response = await fetch(`${API}/api/admin/users/${u.userId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove from local state
+        setUsers(users.filter(user => user.userId !== u.userId));
+        setToast({ message: "✅ Xóa người dùng thành công", type: "success" });
+        setConfirm(null);
+      } else {
+        setToast({ message: data.message || "Xóa thất bại", type: "error" });
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setToast({ message: "Không thể kết nối đến server", type: "error" });
+    }
   };
 
   return (
@@ -337,42 +420,50 @@ function AdminUsers() {
       </div>
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
         <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên, email, username..." />
-        <Tbl headers={["Người dùng", "Username", "Email", "Role", "Bookings", ""]} empty={filtered.length === 0}>
-          {filtered.map((u) => {
-            const fullName = getFullName(u);
-            const bookings = mockBookings.filter((b) => b.userId === u.userId).length;
-            return (
-              <Tr key={u.userId}>
-                <Td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                      width: 38, height: 38, borderRadius: "50%",
-                      background: u.role === "ADMIN" ? "var(--primary)" : "var(--primary-light)",
-                      color: u.role === "ADMIN" ? "#fff" : "var(--primary)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontWeight: 800, fontSize: 16, flexShrink: 0,
-                    }}>{fullName[0]}</div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{fullName}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.firstName} · {u.lastName}</div>
+        
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div>Đang tải...</div>
+          </div>
+        ) : (
+          <Tbl headers={["Người dùng", "Username", "Email", "Role", "Bookings", ""]} empty={filtered.length === 0}>
+            {filtered.map((u) => {
+              const fullName = getFullName(u);
+              // Note: Since we don't have booking data from API yet, show 0 for now
+              const bookings = 0; // mockBookings.filter((b) => b.userId === u.userId).length;
+              return (
+                <Tr key={u.userId}>
+                  <Td>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: "50%",
+                        background: u.role === "ADMIN" ? "var(--primary)" : "var(--primary-light)",
+                        color: u.role === "ADMIN" ? "#fff" : "var(--primary)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontWeight: 800, fontSize: 16, flexShrink: 0,
+                      }}>{fullName[0]}</div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{fullName}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{u.firstName} · {u.lastName}</div>
+                      </div>
                     </div>
-                  </div>
-                </Td>
-                <Td style={{ fontFamily: "monospace", fontSize: 12 }}>{u.username}</Td>
-                <Td style={{ fontSize: 12, color: "var(--text-muted)" }}>{u.email}</Td>
-                <Td><Badge color={u.role === "ADMIN" ? "red" : "blue"}>{u.role}</Badge></Td>
-                <Td><Badge color={bookings > 0 ? "green" : "gray"}>{bookings}</Badge></Td>
-                <Td>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => handleEditClick(u)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
-                    <button onClick={() => u.role !== "ADMIN" && setConfirm(u)} disabled={u.role === "ADMIN"}
-                      style={{ background: u.role === "ADMIN" ? "#f1f5f9" : "#fee2e2", border: "none", borderRadius: 8, padding: "5px 10px", cursor: u.role === "ADMIN" ? "not-allowed" : "pointer", color: u.role === "ADMIN" ? "#94a3b8" : "#dc2626", fontSize: 12 }}>🗑️</button>
-                  </div>
-                </Td>
-              </Tr>
-            );
-          })}
-        </Tbl>
+                  </Td>
+                  <Td style={{ fontFamily: "monospace", fontSize: 12 }}>{u.username}</Td>
+                  <Td style={{ fontSize: 12, color: "var(--text-muted)" }}>{u.email}</Td>
+                  <Td><Badge color={u.role === "ADMIN" ? "red" : "blue"}>{u.role}</Badge></Td>
+                  <Td><Badge color={bookings > 0 ? "green" : "gray"}>{bookings}</Badge></Td>
+                  <Td>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => handleEditClick(u)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
+                      <button onClick={() => u.role !== "ADMIN" && setConfirm(u)} disabled={u.role === "ADMIN"}
+                        style={{ background: u.role === "ADMIN" ? "#f1f5f9" : "#fee2e2", border: "none", borderRadius: 8, padding: "5px 10px", cursor: u.role === "ADMIN" ? "not-allowed" : "pointer", color: u.role === "ADMIN" ? "#94a3b8" : "#dc2626", fontSize: 12 }}>🗑️</button>
+                    </div>
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbl>
+        )}
       </div>
 
       {modal && (
@@ -569,6 +660,10 @@ function AdminFoods() {
 function AdminProvinces() {
   const [search, setSearch] = useState("");
   const [provinces, setProvinces] = useState([]);
+  const [deletedProvinces, setDeletedProvinces] = useState(() => {
+    const saved = localStorage.getItem('deletedProvinces');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [modal, setModal] = useState(null);
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
@@ -595,9 +690,16 @@ function AdminProvinces() {
     try {
       const res = await fetch("http://localhost:8080/api/provinces");
       const data = await res.json();
-      setProvinces(data);
+      // Filter out deleted provinces and sort by provinceId
+      const activeProvinces = data.filter(p => !deletedProvinces.some(dp => dp.provinceId === p.provinceId));
+      const sortedData = activeProvinces.sort((a, b) => a.provinceId - b.provinceId);
+      setProvinces(sortedData);
     } catch (err) {
       console.error('fetch provinces', err);
+      // fallback to mock data if backend not available
+      const activeMock = mockProvinces.filter(p => !deletedProvinces.some(dp => dp.provinceId === p.provinceId));
+      const sortedMock = activeMock.sort((a, b) => a.provinceId - b.provinceId);
+      setProvinces(sortedMock);
     }
   };
 
@@ -605,34 +707,55 @@ function AdminProvinces() {
     loadProvinces();
   }, []);
 
-  const handleSave = async () => {
-    if (!formData.name) {
+  const handleSave = async (updatedFormData) => {
+    const dataToUse = updatedFormData || formData;
+    
+    if (!dataToUse.name || !dataToUse.name.trim()) {
       setToast({ message: "Tên tỉnh không được trống", type: "error" });
       return;
     }
+
+    // Check if this province was previously deleted
+    const deletedProvince = deletedProvinces.find(dp => dp.name.toLowerCase() === dataToUse.name.trim().toLowerCase());
+    
     try {
-      if (modal === "add") {
+      if (deletedProvince) {
+        // Restore the deleted province
+        setDeletedProvinces(prev => {
+          const updated = prev.filter(dp => dp.provinceId !== deletedProvince.provinceId);
+          localStorage.setItem('deletedProvinces', JSON.stringify(updated));
+          return updated;
+        });
+        setProvinces(prev => {
+          const restored = [...prev, deletedProvince];
+          return restored.sort((a, b) => a.provinceId - b.provinceId);
+        });
+        setToast({ message: "✅ Khôi phục tỉnh thành thành công", type: "success" });
+      } else {
+        // Check if province name already exists
+        const existingProvince = provinces.find(p => p.name.toLowerCase() === dataToUse.name.trim().toLowerCase());
+        if (existingProvince) {
+          setToast({ message: "Tên tỉnh này đã tồn tại", type: "error" });
+          return;
+        }
+
+        // Create new province
         const res = await fetch("http://localhost:8080/api/provinces", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ name: dataToUse.name.trim() }),
         });
         const saved = await res.json();
-        setProvinces((prev) => [saved, ...prev]);
+        setProvinces((prev) => {
+          const updated = [...prev, saved];
+          return updated.sort((a, b) => a.provinceId - b.provinceId);
+        });
         setToast({ message: "✅ Thêm tỉnh thành công", type: "success" });
         setCurrentPage(1);
-      } else {
-        const id = formData.provinceId;
-        const res = await fetch(`http://localhost:8080/api/provinces/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const updated = await res.json();
-        setProvinces((prev) => prev.map((p) => (p.provinceId === updated.provinceId ? updated : p)));
-        setToast({ message: "✅ Cập nhật tỉnh thành công", type: "success" });
       }
+      
       setModal(null);
+      // Note: State already updated, no need to reload
     } catch (err) {
       console.error('save province error', err);
       setToast({ message: "Lỗi kết nối tới server", type: "error" });
@@ -640,15 +763,16 @@ function AdminProvinces() {
   };
 
   const handleDelete = async (p) => {
-    try {
-      await fetch(`http://localhost:8080/api/provinces/${p.provinceId}`, { method: "DELETE" });
-      setProvinces((prev) => prev.filter((province) => province.provinceId !== p.provinceId));
-      setToast({ message: "✅ Xóa tỉnh thành công", type: "success" });
-      setConfirm(null);
-    } catch (err) {
-      console.error('delete province error', err);
-      setToast({ message: "Lỗi khi xóa tỉnh", type: "error" });
-    }
+    // Add to deleted provinces list
+    const updatedDeleted = [...deletedProvinces, p];
+    setDeletedProvinces(updatedDeleted);
+    localStorage.setItem('deletedProvinces', JSON.stringify(updatedDeleted));
+    
+    // Remove from active provinces
+    setProvinces(prev => prev.filter(province => province.provinceId !== p.provinceId));
+    
+    setToast({ message: "✅ Xóa tỉnh thành thành công", type: "success" });
+    setConfirm(null);
   };
 
   return (
@@ -848,7 +972,8 @@ function AdminProvinces() {
           mode={modal}
           data={formData}
           onSave={handleSave}
-          onClose={() => { setModal(null); loadProvinces(); }}
+          onChange={setFormData}
+          onClose={() => setModal(null)}
         />
       )}
 

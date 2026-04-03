@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FormModal from "./FormModal";
 import "../styles/AdminModal.css";
 
 export default function UserModal({ mode, data, onSave, onClose }) {
   const [formData, setFormData] = useState(data || {});
+
+  useEffect(() => {
+    setFormData(data || {});
+  }, [data]);
 
   return (
     <FormModal title={mode === "add" ? "Thêm người dùng mới" : "Chỉnh sửa người dùng"} onClose={onClose}>
