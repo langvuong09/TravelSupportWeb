@@ -54,7 +54,23 @@ export function RoleBadge({ role }) {
 }
 
 // ── Avatar ──────────────────────────────────────
-export function Avatar({ name = "?", size = 36 }) {
+export function Avatar({ name = "?", size = 36, avatarUrl = null }) {
+  if (avatarUrl) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt={name}
+        style={{
+          width: size, 
+          height: size, 
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+  
   const colors = ["#0ea5e9","#6366f1","#f59e0b","#22c55e","#ef4444","#8b5cf6"];
   const color = colors[name.charCodeAt(0) % colors.length];
   return (

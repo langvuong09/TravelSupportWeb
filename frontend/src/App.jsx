@@ -6,35 +6,23 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { BookingProvider } from "./context/BookingContext";
 import Navbar from "./components/Navbar";
 import ChatboxAI from "./components/ChatboxAI";
 
-// Public pages
 import Home from "./pages/public/Home";
 import Locations from "./pages/public/Locations";
 import LocationDetail from "./pages/public/LocationDetail";
-import Tours from "./pages/public/Tours";
-import TourDetail from "./pages/public/TourDetail";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 
-// User pages
 import BookingForm from "./pages/user/BookingForm";
 import MyBookings from "./pages/user/MyBookings";
-import MyReviews from "./pages/user/MyReviews";
 import Profile from "./pages/user/Profile";
+import CreateTour from "./pages/user/CreateTour";
 
-// Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import {
-  AdminUsers,
-  AdminLocations,
-  AdminTours,
-  AdminBookings,
-  AdminReviews,
-} from "./pages/admin/AdminPages";
+import AdminPages from "./pages/admin/AdminPages";
 
-// ── Guards ──────────────────────────────────────────────────
 function RequireAuth({ children }) {
   const { user } = useAuth();
   const loc = useLocation();
@@ -53,11 +41,9 @@ function RequireAdmin({ children }) {
 function RequireUser({ children }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === "ADMIN") return <Navigate to="/admin" replace />;
   return children;
 }
 
-// ── Layout ──────────────────────────────────────────────────
 function Layout({ children }) {
   return (
     <>
@@ -97,108 +83,113 @@ function Layout({ children }) {
   );
 }
 
-// ── App ─────────────────────────────────────────────────────
+function AdminLayout({ children }) {
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
-    <Layout>
-      <Routes>
-        {/* ── PUBLIC (không cần đăng nhập) ─────────────────── */}
-        <Route path="/" element={<Home />} />
-        <Route path="/locations" element={<Locations />} />
-        <Route path="/locations/:id" element={<LocationDetail />} />
-        <Route path="/tours" element={<Tours />} />
-        <Route path="/tours/:id" element={<TourDetail />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <Routes>
+      <Route
+        element={
+          <Layout>
+            <Home />
+          </Layout>
+        }
+        path="/"
+      />
+      <Route
+        element={
+          <Layout>
+            <Login />
+          </Layout>
+        }
+        path="/login"
+      />
+      <Route
+        element={
+          <Layout>
+            <Register />
+          </Layout>
+        }
+        path="/register"
+      />
 
-        {/* ── USER (cần đăng nhập, không phải admin) ─────── */}
-        <Route
-          path="/book/:tourId"
-          element={
+      <Route
+        path="/locations"
+        element={
+          <Layout>
             <RequireAuth>
-              <BookingForm />
+              <Locations />
             </RequireAuth>
-          }
-        />
-        <Route
-          path="/my-bookings"
-          element={
+          </Layout>
+        }
+      />
+      <Route
+        path="/locations/:id"
+        element={
+          <Layout>
+            <RequireAuth>
+              <LocationDetail />
+            </RequireAuth>
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/create-tour"
+        element={
+          <Layout>
+            <RequireUser>
+              <CreateTour />
+            </RequireUser>
+          </Layout>
+        }
+      />
+      <Route
+        path="/book/:tourId"
+        element={
+          <Layout>
+            <RequireUser>
+              <BookingForm />
+            </RequireUser>
+          </Layout>
+        }
+      />
+      <Route
+        path="/my-bookings"
+        element={
+          <Layout>
             <RequireUser>
               <MyBookings />
             </RequireUser>
-          }
-        />
-        <Route
-          path="/my-reviews"
-          element={
-            <RequireUser>
-              <MyReviews />
-            </RequireUser>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
+          </Layout>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <Layout>
             <RequireAuth>
               <Profile />
             </RequireAuth>
-          }
-        />
+          </Layout>
+        }
+      />
 
-        {/* ── ADMIN (cần đăng nhập + role ADMIN) ─────────── */}
-        <Route
-          path="/admin"
-          element={
+      <Route
+        path="/admin/*"
+        element={
+          <AdminLayout>
             <RequireAdmin>
-              <AdminDashboard />
+              <AdminPages />
             </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <RequireAdmin>
-              <AdminUsers />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/locations"
-          element={
-            <RequireAdmin>
-              <AdminLocations />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/tours"
-          element={
-            <RequireAdmin>
-              <AdminTours />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/bookings"
-          element={
-            <RequireAdmin>
-              <AdminBookings />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/reviews"
-          element={
-            <RequireAdmin>
-              <AdminReviews />
-            </RequireAdmin>
-          }
-        />
+          </AdminLayout>
+        }
+      />
 
-        {/* 404 */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
@@ -206,7 +197,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <BookingProvider>
+          <AppRoutes />
+        </BookingProvider>
       </AuthProvider>
     </BrowserRouter>
   );

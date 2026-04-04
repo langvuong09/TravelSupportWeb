@@ -1,94 +1,323 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Avatar, RoleBadge } from "../../components/UI";
+import {
+  mockBookings, mockTours,
+  getFullName, getTourThumbnail, getTourEstimatedCost,
+  getProvincesByTour, formatPrice,
+} from "../../data/mockData";
+import { Link } from "react-router-dom";
 
-export default function Profile() {
-  const { user } = useAuth();
-  const [form, setForm] = useState({ ...user });
-  const [saved, setSaved] = useState(false);
-  const [tab, setTab]     = useState("info");
+const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  const Field = ({ k, label, type = "text" }) => (
-    <div>
-      <label className="field-label">{label}</label>
-      <input
-        className="input-field"
-        type={type}
-        value={form[k] || ""}
-        onChange={e => { setForm({ ...form, [k]: e.target.value }); setSaved(false); }}
+/* ── Avatar ── */
+function Avatar({ user, size = 80, avatarUrl = null }) {
+  const name = getFullName(user);
+  
+  if (avatarUrl) {
+    return (
+      <img 
+        src={avatarUrl} 
+        alt={name}
+        style={{
+          width: size, 
+          height: size, 
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
       />
+    );
+  }
+  
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: "#fff", fontWeight: 900, fontSize: size * 0.38,
+      flexShrink: 0,
+    }}>
+      {name[0]?.toUpperCase()}
     </div>
   );
+}
+
+/* ── Tab bar ── */
+const TABS = ["Thông tin"];
+
+export default function Profile() {
+  const { user, logout, updateUser, changePassword, deleteUserImage } = useAuth();
+  const [tab,  setTab]  = useState("Thông tin");
+  const [form, setForm] = useState({
+    firstName: user?.firstName || "",
+    lastName:  user?.lastName  || "",
+    email:     user?.email     || "",
+    phone:     user?.phone     || "",
+    birthDate: user?.birthDate || "",
+  });
+  const [avatarUrl, setAvatarUrl] = useState(user?.image ? `${API}${user.image}` : null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({ current: "", new: "", confirm: "" });
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const myBookings = mockBookings.filter((b) => b.userId === user?.userId);
+
+  const handleSave = async () => {
+    const result = await updateUser(user.id, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      phone: form.phone,
+      birthDate: form.birthDate,
+      imageFile: avatarFile,
+    });
+    if (result.success) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } else {
+      alert(result.message);
+    }
+  };
 
   return (
-    <div className="page-wrap" style={{ maxWidth: 760 }}>
-      <h1 className="page-title">Hồ sơ cá nhân</h1>
-      <p className="page-subtitle">Quản lý thông tin tài khoản của bạn</p>
-
+    <div className="page-wrap">
       {/* Profile header */}
-      <div style={{ background: "linear-gradient(135deg,var(--primary),var(--secondary))", borderRadius: "var(--radius-xl)", padding: "28px 32px", marginBottom: 24, display: "flex", alignItems: "center", gap: 20, color: "#fff" }}>
-        <Avatar name={user.fullName} size={72} />
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 4px" }}>{user.fullName}</h2>
-          <div style={{ opacity: 0.85, fontSize: 14, marginBottom: 8 }}>@{user.username} · {user.email}</div>
-          <RoleBadge role={user.role} />
+      <div style={{
+        background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+        borderRadius: "var(--radius-xl)", padding: "32px 28px",
+        display: "flex", alignItems: "center", gap: 24, marginBottom: 28,
+        color: "#fff",
+      }}>
+        <Avatar user={user} size={72} avatarUrl={avatarUrl} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 22, fontWeight: 900 }}>{getFullName(user)}</div>
+          <div style={{ fontSize: 14, opacity: 0.8 }}>{user?.email}</div>
+          <div style={{ marginTop: 8, display: "flex", gap: 18 }}>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => setShowChangePassword(!showChangePassword)} className="btn btn-outline"
+            style={{ borderColor: "rgba(255,255,255,.5)", color: "#fff" }}>
+            Đổi mật khẩu
+          </button>
+          <button onClick={logout} className="btn btn-outline"
+            style={{ borderColor: "rgba(255,255,255,.5)", color: "#fff" }}>
+            Đăng xuất
+          </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#f1f5f9", padding: 4, borderRadius: "var(--radius-md)", width: "fit-content" }}>
-        {[["info","Thông tin cá nhân"],["password","Đổi mật khẩu"]].map(([t, l]) => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: "8px 18px", border: "none",
-            background: tab === t ? "#fff" : "transparent",
-            color: tab === t ? "var(--text)" : "var(--text-muted)",
-            borderRadius: "var(--radius-sm)", fontWeight: tab === t ? 700 : 400,
-            fontSize: 14, cursor: "pointer", boxShadow: tab === t ? "var(--shadow-xs)" : "none",
-          }}>{l}</button>
+      <div style={{ display: "flex", gap: 4, marginBottom: 24 }}>
+        {TABS.map((t) => (
+          <button key={t} onClick={() => setTab(t)}
+            style={{
+              padding: "9px 20px", borderRadius: 30,
+              border: "1.5px solid var(--border)",
+              background: tab === t ? "var(--primary)" : "#fff",
+              color: tab === t ? "#fff" : "var(--text-muted)",
+              fontWeight: 700, fontSize: 14, cursor: "pointer",
+              transition: "all .2s",
+            }}>
+            {t}
+          </button>
         ))}
       </div>
 
-      {tab === "info" && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", padding: 28 }}>
-          <form onSubmit={handleSave}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-              <Field k="fullName"  label="Họ và tên" />
-              <Field k="username"  label="Tên đăng nhập" />
-              <Field k="email"     label="Email" type="email" />
-              <Field k="phone"     label="Số điện thoại" type="tel" />
-              <Field k="birthDate" label="Ngày sinh" type="date" />
-            </div>
-
-            {saved && (
-              <div style={{ background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#16a34a", marginBottom: 14 }}>
-                ✓ Thông tin đã được lưu thành công!
+      {/* ── Tab: Thông tin ── */}
+      {tab === "Thông tin" && (
+        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 28, maxWidth: 700 }}>
+          {/* Change Password Section */}
+          {showChangePassword && (
+            <div style={{ marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid var(--border)" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 20 }}>Đổi mật khẩu</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+                <div>
+                  <label className="field-label">Mật khẩu hiện tại</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập mật khẩu hiện tại"
+                    className="input-field" 
+                    value={passwordForm.current}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="field-label">Mật khẩu mới</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    className="input-field" 
+                    value={passwordForm.new}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="field-label">Nhập lại mật khẩu mới</label>
+                  <input 
+                    type="password"
+                    placeholder="Nhập lại mật khẩu mới"
+                    className="input-field" 
+                    value={passwordForm.confirm}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} 
+                  />
+                </div>
               </div>
-            )}
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                <button 
+                  onClick={async () => {
+                    if (passwordForm.new !== passwordForm.confirm) {
+                      alert("Mật khẩu nhập lại không trùng khớp");
+                      return;
+                    }
+                    const result = await changePassword(user.id, passwordForm.current, passwordForm.new, passwordForm.confirm);
+                    if (result.success) {
+                      setPasswordSaved(true);
+                      setPasswordForm({ current: "", new: "", confirm: "" });
+                      setTimeout(() => { setPasswordSaved(false); setShowChangePassword(false); }, 2000);
+                    } else {
+                      alert(result.message || "Đổi mật khẩu thất bại!");
+                    }
+                  }} 
+                  className="btn btn-primary"
+                >
+                  Cập nhật mật khẩu
+                </button>
+                <button 
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordForm({ current: "", new: "", confirm: "" });
+                  }} 
+                  className="btn btn-outline"
+                >
+                  Huỷ
+                </button>
+                {passwordSaved && <span style={{ color: "var(--success)", fontSize: 13, fontWeight: 600, alignSelf: "center" }}>✓ Đã lưu!</span>}
+              </div>
+            </div>
+          )}
 
-            <button type="submit" className="btn btn-primary">
-              {saved ? "✓ Đã lưu" : "Lưu thay đổi"}
-            </button>
-          </form>
+          {/* Profile Info Section */}
+          <h2 style={{ fontSize: 16, fontWeight: 800, marginBottom: 20 }}>Chỉnh sửa thông tin</h2>
+          
+          {/* Avatar Upload */}
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid var(--border)" }}>
+            <div>
+              <Avatar user={user} size={100} avatarUrl={avatarUrl} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: 10, fontWeight: 600, color: "var(--text)" }}>Ảnh đại diện</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setAvatarFile(file);
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      setAvatarUrl(ev.target?.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                style={{ marginBottom: 8 }}
+              />
+              <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>Chọn ảnh JPG, PNG (tối đa 5MB)</p>
+            </div>
+          </div>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <label className="field-label">Họ</label>
+              <input className="input-field" value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Tên</label>
+              <input className="input-field" value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+            </div>
+            <div style={{ gridColumn: "span 2" }}>
+              <label className="field-label">Email</label>
+              <input className="input-field" type="email" value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Số điện thoại</label>
+              <input className="input-field" type="tel" value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div>
+              <label className="field-label">Ngày sinh</label>
+              <input className="input-field" type="date" value={form.birthDate}
+                onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 20, alignItems: "center" }}>
+            <button onClick={handleSave} className="btn btn-primary">Lưu thay đổi</button>
+            {saved && <span style={{ color: "var(--success)", fontSize: 13, fontWeight: 600 }}>✓ Đã lưu!</span>}
+          </div>
         </div>
       )}
 
-      {tab === "password" && (
-        <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", padding: 28, maxWidth: 420 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[["Mật khẩu hiện tại","password"],["Mật khẩu mới","password"],["Xác nhận mật khẩu mới","password"]].map(([l, t]) => (
-              <div key={l}>
-                <label className="field-label">{l}</label>
-                <input className="input-field" type={t} placeholder="••••••••" />
-              </div>
-            ))}
-            <button className="btn btn-primary" style={{ width: "fit-content" }}>Đổi mật khẩu</button>
-          </div>
+      {/* ── Tab: Đặt tour ── */}
+      {tab === "Đặt tour" && (
+        <div>
+          {myBookings.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0" }}>
+              <div style={{ fontSize: 48 }}>🏕️</div>
+              <p style={{ color: "var(--text-muted)", marginTop: 12 }}>Chưa có đặt tour nào</p>
+              <Link to="/create-tour" className="btn btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
+                Khám phá tour ngay
+              </Link>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {myBookings.map((b) => {
+                const tour      = mockTours.find((t) => t.tourId === b.tourId);
+                const thumbnail = getTourThumbnail(b.tourId);
+                const provinces = getProvincesByTour(b.tourId);
+                const cost      = getTourEstimatedCost(b.tourId);
+                if (!tour) return null;
+                return (
+                  <div key={b.bookingId} style={{
+                    background: "#fff", border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-lg)", padding: 18,
+                    display: "flex", gap: 16, alignItems: "center",
+                    boxShadow: "var(--shadow-sm)",
+                  }}>
+                    <img src={thumbnail} alt={tour.name}
+                      style={{ width: 88, height: 66, objectFit: "cover", borderRadius: "var(--radius-sm)", flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
+                        {tour.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "3px 0 6px" }}>
+                        {provinces.map((p) => p.name).join(" → ")}
+                      </div>
+                      <div style={{ fontSize: 13 }}>
+                        <span style={{
+                          background: b.status === "confirmed" ? "#dcfce7" : "#fef9c3",
+                          color:      b.status === "confirmed" ? "#16a34a" : "#ca8a04",
+                          padding: "2px 10px", borderRadius: 20, fontWeight: 700, fontSize: 12,
+                        }}>
+                          {b.status === "confirmed" ? "✓ Đã xác nhận" : "⏳ Chờ xác nhận"}
+                        </span>
+                      </div>
+                    </div>
+                    {cost > 0 && (
+                      <div style={{ fontWeight: 800, color: "var(--primary)", fontSize: 15 }}>
+                        {formatPrice(cost)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

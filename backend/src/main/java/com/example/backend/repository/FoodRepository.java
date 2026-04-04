@@ -1,11 +1,9 @@
 package com.example.backend.repository;
 
 import com.example.backend.entity.Food;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
 public interface FoodRepository extends JpaRepository<Food, Integer> {
-    List<Food> findByFoodIdIn(List<Integer> foodIds);
+    List<Food> findByProvinceId(Integer provinceId);
 }
