@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.request;
 
 public class LoginRequest {
     private String username;
