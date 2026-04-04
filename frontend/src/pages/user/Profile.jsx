@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import {
-  mockBookings, mockTours,
-  getFullName, getTourThumbnail, getTourEstimatedCost,
-  getProvincesByTour, formatPrice,
-} from "../../data/mockData";
+import { formatPrice } from "../../services/api";
 import { Link } from "react-router-dom";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 /* ── Avatar ── */
 function Avatar({ user, size = 80, avatarUrl = null }) {
-  const name = getFullName(user);
+  const name = user?.firstName && user?.lastName 
+    ? `${user.firstName} ${user.lastName}` 
+    : user?.username || "User";
   
   if (avatarUrl) {
     return (
@@ -62,8 +60,6 @@ export default function Profile() {
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const myBookings = mockBookings.filter((b) => b.userId === user?.userId);
-
   const handleSave = async () => {
     const result = await updateUser(user.id, {
       firstName: form.firstName,
@@ -92,7 +88,11 @@ export default function Profile() {
       }}>
         <Avatar user={user} size={72} avatarUrl={avatarUrl} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 22, fontWeight: 900 }}>{getFullName(user)}</div>
+          <div style={{ fontSize: 22, fontWeight: 900 }}>
+            {user?.firstName && user?.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user?.username || "User"}
+          </div>
           <div style={{ fontSize: 14, opacity: 0.8 }}>{user?.email}</div>
           <div style={{ marginTop: 8, display: "flex", gap: 18 }}>
           </div>
@@ -260,64 +260,6 @@ export default function Profile() {
             <button onClick={handleSave} className="btn btn-primary">Lưu thay đổi</button>
             {saved && <span style={{ color: "var(--success)", fontSize: 13, fontWeight: 600 }}>✓ Đã lưu!</span>}
           </div>
-        </div>
-      )}
-
-      {/* ── Tab: Đặt tour ── */}
-      {tab === "Đặt tour" && (
-        <div>
-          {myBookings.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <div style={{ fontSize: 48 }}>🏕️</div>
-              <p style={{ color: "var(--text-muted)", marginTop: 12 }}>Chưa có đặt tour nào</p>
-              <Link to="/create-tour" className="btn btn-primary" style={{ marginTop: 16, display: "inline-flex" }}>
-                Khám phá tour ngay
-              </Link>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {myBookings.map((b) => {
-                const tour      = mockTours.find((t) => t.tourId === b.tourId);
-                const thumbnail = getTourThumbnail(b.tourId);
-                const provinces = getProvincesByTour(b.tourId);
-                const cost      = getTourEstimatedCost(b.tourId);
-                if (!tour) return null;
-                return (
-                  <div key={b.bookingId} style={{
-                    background: "#fff", border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)", padding: 18,
-                    display: "flex", gap: 16, alignItems: "center",
-                    boxShadow: "var(--shadow-sm)",
-                  }}>
-                    <img src={thumbnail} alt={tour.name}
-                      style={{ width: 88, height: 66, objectFit: "cover", borderRadius: "var(--radius-sm)", flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: "var(--text)" }}>
-                        {tour.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "3px 0 6px" }}>
-                        {provinces.map((p) => p.name).join(" → ")}
-                      </div>
-                      <div style={{ fontSize: 13 }}>
-                        <span style={{
-                          background: b.status === "confirmed" ? "#dcfce7" : "#fef9c3",
-                          color:      b.status === "confirmed" ? "#16a34a" : "#ca8a04",
-                          padding: "2px 10px", borderRadius: 20, fontWeight: 700, fontSize: 12,
-                        }}>
-                          {b.status === "confirmed" ? "✓ Đã xác nhận" : "⏳ Chờ xác nhận"}
-                        </span>
-                      </div>
-                    </div>
-                    {cost > 0 && (
-                      <div style={{ fontWeight: 800, color: "var(--primary)", fontSize: 15 }}>
-                        {formatPrice(cost)}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       )}
     </div>

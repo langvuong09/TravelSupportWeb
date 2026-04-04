@@ -18,8 +18,6 @@ frontend/
     │   └── global.css           # CSS dùng chung
     ├── context/
     │   └── AuthContext.jsx      # Quản lý đăng nhập (useState)
-    ├── data/
-    │   └── mockData.js          # Dữ liệu mock theo đúng schema DB
     ├── components/
     │   ├── UI.jsx               # Icons, StarRating, Badge, Avatar...
     │   ├── Navbar.jsx           # Navbar thay đổi theo role
@@ -65,16 +63,6 @@ frontend/
 
 ---
 
-## Tài khoản demo
-
-| Username | Password | Role  |
-|----------|----------|-------|
-| admin    | admin    | ADMIN |
-| user1    | 123456   | USER  |
-| user2    | 123456   | USER  |
-
----
-
 ## Cài đặt & chạy
 
 ```bash
@@ -89,30 +77,4 @@ Mặc định chạy ở `http://localhost:3000`
 
 ## Kết nối backend
 
-Hiện tại dữ liệu dùng mock từ `src/data/mockData.js`.  
-Để kết nối với Spring Boot backend, thay các import từ `mockData.js` bằng `fetch` tới `http://localhost:8080/api/...`
-
-Ví dụ:
-```js
-// Trước (mock)
-import { mockTours } from "../data/mockData";
-
-// Sau (API thực)
-const [tours, setTours] = useState([]);
-useEffect(() => {
-  fetch("http://localhost:8080/api/tours")
-    .then(r => r.json())
-    .then(setTours);
-}, []);
-```
-
----
-
-## Schema DB tương ứng
-
-- `users` → `src/data/mockData.js` (mockUsers)
-- `locations` → (mockLocations)  
-- `located_details` → (mockLocationDetails) — 1-1 với locations
-- `tours` → (mockTours)
-- `bookings` → (mockBookings)
-- `reviews` → (mockReviews)
+Backend sử dụng Spring Boot tại `http://localhost:8080/api/...`

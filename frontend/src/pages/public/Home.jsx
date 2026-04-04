@@ -1,10 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import {
-  mockLocations, mockReviews,
-  formatPrice, getUserById, getFullName, avgRating,
-} from "../../data/mockData";
+import { getLocations } from "../../services/api";
 import LocationCard from "../../components/LocationCard";
 import { Ic, StarRating } from "../../components/UI";
 import "./Home.css";
@@ -18,8 +15,20 @@ const STATS = [
 
 export default function Home() {
   const [search, setSearch] = useState("");
+  const [locations, setLocations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const nav = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const loadLocations = async () => {
+      setIsLoading(true);
+      const data = await getLocations();
+      setLocations(data);
+      setIsLoading(false);
+    };
+    loadLocations();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -30,8 +39,7 @@ export default function Home() {
     if (search.trim()) nav(`/locations?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const featuredLocations = mockLocations.slice(0, 6);
-  const recentReviews     = mockReviews.slice(0, 3);
+  const featuredLocations = locations.slice(0, 6);
 
   return (
     <div className="home">

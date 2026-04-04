@@ -1,20 +1,8 @@
 import { Link } from "react-router-dom";
 import { Ic } from "./UI";
-import { formatPrice, getProvince, getToursByLocation, avgRating } from "../data/mockData";
+import { formatPrice } from "../services/api";
 
 export default function LocationCard({ location }) {
-  const province = getProvince(location.provinceId);
-  const tours    = getToursByLocation(location.locationId);
-
-  // Rating trung bình của tất cả tours có location này
-  const allRatings = tours.flatMap((t) => {
-    const r = Number(avgRating(t.tourId));
-    return r > 0 ? [r] : [];
-  });
-  const rating = allRatings.length
-    ? (allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1)
-    : null;
-
   return (
     <Link
       to={`/locations/${location.locationId}`}
@@ -38,21 +26,12 @@ export default function LocationCard({ location }) {
         }}>
           {location.type}
         </div>
-        {rating && (
-          <div style={{
-            position: "absolute", top: 12, right: 12,
-            background: "rgba(245,158,11,0.9)", borderRadius: 8,
-            padding: "4px 10px", color: "#fff", fontSize: 12, fontWeight: 700,
-          }}>
-            ★ {rating}
-          </div>
-        )}
       </div>
 
       {/* Content */}
       <div style={{ padding: "16px 18px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5, color: "var(--text-muted)", fontSize: 12, marginBottom: 6 }}>
-          <Ic.Pin /> {province?.name || "Việt Nam"}
+          <Ic.Pin /> Việt Nam
         </div>
         <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text)", marginBottom: 8, lineHeight: 1.3 }}>
           {location.name}
@@ -66,7 +45,7 @@ export default function LocationCard({ location }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-light)", paddingTop: 12 }}>
           <div>
             <div style={{ fontSize: 11, color: "var(--text-light)" }}>Thời điểm lý tưởng</div>
-            <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{location.bestTimeToVisit}</div>
+            <div style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>{location.bestTimeToVisit || location.niceTime || "—"}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 11, color: "var(--text-light)" }}>Chi phí từ</div>
