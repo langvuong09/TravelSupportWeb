@@ -226,22 +226,6 @@ export default function Profile() {
                 style={{ marginBottom: 8 }}
               />
               <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>Chọn ảnh JPG, PNG (tối đa 5MB)</p>
-              {avatarUrl && (
-                <button 
-                  onClick={async () => {
-                    const result = await deleteUserImage(user.id);
-                    if (result.success) {
-                      setAvatarUrl(null);
-                      setAvatarFile(null);
-                    } else {
-                      alert(result.message || "Xóa ảnh thất bại!");
-                    }
-                  }}
-                  style={{ marginTop: 8, padding: "4px 12px", background: "#fee2e2", border: "none", borderRadius: 6, color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
-                >
-                  Xoá ảnh
-                </button>
-              )}
             </div>
           </div>
           
