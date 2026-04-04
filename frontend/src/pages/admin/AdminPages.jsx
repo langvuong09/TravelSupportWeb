@@ -6,13 +6,12 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
-  mockUsers, mockTours, mockLocations, mockProvinces,
-  mockBookings, mockFoods, mockTransportTypes,
-  mockTourLocations, mockTourProvinces, mockTourFoods,
-  getFullName, getProvince, getLocationsByTour, getProvincesByTour,
-  getFoodsByTour, getTransportByTour, getTourThumbnail,
-  getTourEstimatedCost, avgRating, formatPrice,
-} from "../../data/mockData";
+  getLocations, getProvinces, getFoods, getTransports, getAllUsers,
+  deleteLocation, deleteFood, deleteProvince,
+  createLocation, createFood, createProvince,
+  updateFood, updateProvince,
+  formatPrice,
+} from "../../services/api";
 import { Ic } from "../../components/UI";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import LocationModal from "../../components/LocationModal";
@@ -107,15 +106,38 @@ const Td = ({ children, style = {} }) => <td style={{ padding: "11px 14px", vert
 
 // ── 1. DASHBOARD ─────────────────────────────────────────────
 function AdminDashboard() {
+  const [stats, setStats] = useState({ locations: 0, users: 0, foods: 0, provinces: 0, isLoading: true });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const [locs, provs, foods, users] = await Promise.all([
+          getLocations(), getProvinces(), getFoods(), getAllUsers()
+        ]);
+        setStats({
+          locations: locs?.length || 0,
+          provinces: provs?.length || 0,
+          foods: foods?.length || 0,
+          users: users?.length || 0,
+          isLoading: false
+        });
+      } catch (err) {
+        console.error("Error loading stats:", err);
+        setStats(s => ({ ...s, isLoading: false }));
+      }
+    };
+    loadStats();
+  }, []);
+
   return (
     <div>
       <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>Tổng quan hệ thống</h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 16, marginBottom: 32 }}>
-        <StatCard emoji="📍" label="Địa điểm"        value={mockLocations.length}     sub={`${mockProvinces.length} tỉnh thành`}  color="green"  />
-        <StatCard emoji="👥" label="Người dùng"      value={mockUsers.length}         sub="Đã đăng ký"               color="purple" />
-        <StatCard emoji="🍜" label="Ẩm thực"         value={mockFoods.length}         sub="Trong hệ thống"           color="blue"   />
-        <StatCard emoji="🗺️" label="Tỉnh / Thành phố" value={mockProvinces.length}  sub="Phủ sóng toàn quốc"      color="cyan"   />
+        <StatCard emoji="📍" label="Địa điểm"        value={stats.locations}     sub={`${stats.provinces} tỉnh thành`}  color="green"  />
+        <StatCard emoji="👥" label="Người dùng"      value={stats.users}         sub="Đã đăng ký"               color="purple" />
+        <StatCard emoji="🍜" label="Ẩm thực"         value={stats.foods}         sub="Trong hệ thống"           color="blue"   />
+        <StatCard emoji="🗺️" label="Tỉnh / Thành phố" value={stats.provinces}  sub="Phủ sóng toàn quốc"      color="cyan"   />
       </div>
 
       <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 28, textAlign: "center" }}>
@@ -133,40 +155,43 @@ function AdminLocations() {
   const [province,   setProvince]   = useState("Tất cả");
   const [typeFilter, setTypeFilter] = useState("Tất cả");
   const [locations,  setLocations]  = useState([]);
+  const [provinces,  setProvinces]  = useState([]);
   const [confirm,    setConfirm]    = useState(null);
   const [modal,      setModal]      = useState(null); // 'add' | 'edit' | null
   const [editItem,   setEditItem]   = useState(null);
   const [formData,   setFormData]   = useState({});
   const [toast,      setToast]      = useState(null);
 
-  const types = ["Tất cả", ...new Set(mockLocations.map((l) => l.type))];
+  const types = ["Tất cả", "Thiên nhiên", "Văn hóa", "Biển đảo", "Nghỉ dưỡng", "Giải trí"];
   const typeColors = { "Thiên nhiên": "green", "Văn hóa": "purple", "Biển đảo": "blue", "Nghỉ dưỡng": "yellow", "Giải trí": "red" };
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [locs, provs] = await Promise.all([getLocations(), getProvinces()]);
+        setLocations(locs || []);
+        setProvinces(provs || []);
+      } catch (err) {
+        console.error('Error loading location data:', err);
+      }
+    };
+    loadData();
+  }, []);
+
+  const getProvinceById = (id) => provinces.find(p => p.provinceId === id);
+  const getProvinceName = (id) => provinces.find(p => p.provinceId === id)?.name || "—";
+
   const filtered = locations.filter((l) => {
-    const prov = getProvince(l.provinceId);
+    const provName = getProvinceName(l.provinceId);
     return (
-      (l.name.toLowerCase().includes(search.toLowerCase()) || prov?.name.toLowerCase().includes(search.toLowerCase())) &&
-      (province   === "Tất cả" || prov?.name === province) &&
+      (l.name.toLowerCase().includes(search.toLowerCase()) || provName.toLowerCase().includes(search.toLowerCase())) &&
+      (province   === "Tất cả" || provName === province) &&
       (typeFilter === "Tất cả" || l.type === typeFilter)
     );
   });
 
-  const loadLocations = async () => {
-    try {
-      const res = await fetch("http://localhost:8080/api/locations");
-      const data = await res.json();
-      setLocations(data);
-    } catch (err) {
-      console.error('fetch locations', err);
-      // fallback to mock data
-      setLocations(mockLocations);
-    }
-  };
-
-  useEffect(() => { loadLocations(); }, []);
-
   const handleAddClick = () => {
-    setFormData({ name: "", description: "", type: "Thiên nhiên", provinceId: mockProvinces[0]?.provinceId, estimatedCost: 0, bestTimeToVisit: "", image: "" });
+    setFormData({ name: "", description: "", type: "Thiên nhiên", provinceId: provinces[0]?.provinceId || 1, estimatedCost: 0, bestTimeToVisit: "", image: "" });
     setEditItem(null);
     setModal("add");
   };
@@ -184,19 +209,17 @@ function AdminLocations() {
     }
     try {
       if (modal === "add") {
-        const res = await fetch("http://localhost:8080/api/locations", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-        const saved = await res.json();
-        setToast({ message: "Thêm địa điểm thành công", type: "success" });
+        const result = await createLocation(formData);
+        if (result.success) {
+          setToast({ message: "✅ Thêm địa điểm thành công", type: "success" });
+        } else {
+          throw new Error(result.message);
+        }
       } else if (modal === "edit") {
-        // backend doesn't have PUT endpoint in sample; update local state as fallback
-        setToast({ message: "Cập nhật địa điểm thành công", type: "success" });
+        setToast({ message: "✅ Cập nhật địa điểm thành công", type: "success" });
       }
-      // reload list from server
-      await loadLocations();
+      const locs = await getLocations();
+      setLocations(locs || []);
       setModal(null);
     } catch (err) {
       console.error('save location error', err);
@@ -206,10 +229,13 @@ function AdminLocations() {
 
   const handleDelete = async (loc) => {
     try {
-      const res = await fetch(`http://localhost:8080/api/locations/${loc.locationId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
-      setLocations((p) => p.filter((l) => l.locationId !== loc.locationId));
-      setToast({ message: "✅ Xoá địa điểm thành công", type: "success" });
+      const result = await deleteLocation(loc.locationId);
+      if (result.success) {
+        setLocations((p) => p.filter((l) => l.locationId !== loc.locationId));
+        setToast({ message: "✅ Xoá địa điểm thành công", type: "success" });
+      } else {
+        throw new Error(result.message);
+      }
     } catch (err) {
       console.error('delete location error', err);
       setToast({ message: "Lỗi khi xóa địa điểm", type: "error" });
@@ -228,39 +254,36 @@ function AdminLocations() {
         <SearchBar value={search} onChange={setSearch} placeholder="Tìm địa điểm, tỉnh thành...">
           <select value={province} onChange={(e) => setProvince(e.target.value)} className="input-field" style={{ width: "auto", padding: "9px 14px" }}>
             <option value="Tất cả">Tất cả tỉnh</option>
-            {mockProvinces.map((p) => <option key={p.provinceId} value={p.name}>{p.name}</option>)}
+            {provinces.map((p) => <option key={p.provinceId} value={p.name}>{p.name}</option>)}
           </select>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="input-field" style={{ width: "auto", padding: "9px 14px" }}>
             {types.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </SearchBar>
         <Tbl headers={["Địa điểm", "Tỉnh", "Loại", "Chi phí", "Thời điểm đẹp", ""]} empty={filtered.length === 0}>
-          {filtered.map((loc) => {
-            const prov  = getProvince(loc.provinceId);
-            return (
-              <Tr key={loc.locationId}>
-                <Td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <img src={loc.image} alt="" style={{ width: 52, height: 40, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>{loc.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{loc.description.slice(0, 48)}…</div>
-                    </div>
+          {filtered.map((loc) => (
+            <Tr key={loc.locationId}>
+              <Td>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <img src={loc.image} alt="" style={{ width: 52, height: 40, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{loc.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{loc.description?.slice(0, 48)}…</div>
                   </div>
-                </Td>
-                <Td><Badge color="blue">{prov?.name}</Badge></Td>
-                <Td><Badge color={typeColors[loc.type] || "gray"}>{loc.type}</Badge></Td>
-                <Td style={{ fontWeight: 700, color: "var(--primary)" }}>{formatPrice(loc.estimatedCost)}</Td>
-                <Td style={{ fontSize: 12 }}>{loc.niceTime}</Td>
-                <Td>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => handleEditClick(loc)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
-                    <button onClick={() => setConfirm(loc)} style={{ background: "#fee2e2", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "#dc2626", fontSize: 12 }}>🗑️</button>
-                  </div>
-                </Td>
-              </Tr>
-            );
-          })}
+                </div>
+              </Td>
+              <Td><Badge color="blue">{getProvinceName(loc.provinceId)}</Badge></Td>
+              <Td><Badge color={typeColors[loc.type] || "gray"}>{loc.type}</Badge></Td>
+              <Td style={{ fontWeight: 700, color: "var(--primary)" }}>{formatPrice(loc.estimatedCost)}</Td>
+              <Td style={{ fontSize: 12 }}>{loc.niceTime || loc.bestTimeToVisit}</Td>
+              <Td>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => handleEditClick(loc)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
+                  <button onClick={() => setConfirm(loc)} style={{ background: "#fee2e2", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "#dc2626", fontSize: 12 }}>🗑️</button>
+                </div>
+              </Td>
+            </Tr>
+          ))}
         </Tbl>
       </div>
 
@@ -270,7 +293,6 @@ function AdminLocations() {
           data={formData}
           onSave={handleSave}
           onClose={() => setModal(null)}
-          onSaved={loadLocations}
         />
       )}
 
@@ -305,6 +327,14 @@ function AdminUsers() {
   const [toast,   setToast]   = useState(null);
 
   const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
+  // Helper: Get full name from first and last name
+  const getFullName = (u) => {
+    if (u?.firstName && u?.lastName) return `${u.firstName} ${u.lastName}`;
+    if (u?.firstName) return u.firstName;
+    if (u?.lastName) return u.lastName;
+    return u?.username || "User";
+  };
 
   // Load users from API
   useEffect(() => {
@@ -426,11 +456,9 @@ function AdminUsers() {
             <div>Đang tải...</div>
           </div>
         ) : (
-          <Tbl headers={["Người dùng", "Username", "Email", "Role", "Bookings", ""]} empty={filtered.length === 0}>
+          <Tbl headers={["Người dùng", "Username", "Email", "Role", ""]} empty={filtered.length === 0}>
             {filtered.map((u) => {
               const fullName = getFullName(u);
-              // Note: Since we don't have booking data from API yet, show 0 for now
-              const bookings = 0; // mockBookings.filter((b) => b.userId === u.userId).length;
               return (
                 <Tr key={u.userId}>
                   <Td>
@@ -451,7 +479,6 @@ function AdminUsers() {
                   <Td style={{ fontFamily: "monospace", fontSize: 12 }}>{u.username}</Td>
                   <Td style={{ fontSize: 12, color: "var(--text-muted)" }}>{u.email}</Td>
                   <Td><Badge color={u.role === "ADMIN" ? "red" : "blue"}>{u.role}</Badge></Td>
-                  <Td><Badge color={bookings > 0 ? "green" : "gray"}>{bookings}</Badge></Td>
                   <Td>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => handleEditClick(u)} style={{ background: "var(--primary-light)", border: "none", borderRadius: 8, padding: "5px 10px", cursor: "pointer", color: "var(--primary)", fontSize: 12 }}>✏️</button>
@@ -500,6 +527,7 @@ function AdminFoods() {
   const [search,   setSearch]   = useState("");
   const [province, setProvince] = useState("Tất cả");
   const [foods,    setFoods]    = useState([]);
+  const [provinces, setProvinces] = useState([]);
   const [confirm,  setConfirm]  = useState(null);
   const [modal,    setModal]    = useState(null);
   const [formData, setFormData] = useState({});
@@ -509,7 +537,7 @@ function AdminFoods() {
   const foodTypes = ["Đặc sản", "Hải sản", "Chay", "Street food", "Tráng miệng"];
 
   const filtered = foods.filter((f) => {
-    const prov = getProvince(f.provinceId);
+    const prov = provinces.find(p => p.provinceId === f.provinceId);
     return f.name.toLowerCase().includes(search.toLowerCase()) && (province === "Tất cả" || prov?.name === province);
   });
 
@@ -521,15 +549,27 @@ function AdminFoods() {
       setFoods(data || []);
     } catch (err) {
       console.error('fetch foods', err);
-      // fallback to mock data if backend not available
-      setFoods(mockFoods);
+      setFoods([]);
     }
   };
 
-  useEffect(() => { loadFoods(); }, []);
+  const loadProvinces = async () => {
+    try {
+      const provs = await getProvinces();
+      setProvinces(provs || []);
+    } catch (err) {
+      console.error('Error loading provinces:', err);
+      setProvinces([]);
+    }
+  };
+
+  useEffect(() => {
+    loadFoods();
+    loadProvinces();
+  }, []);
 
   const handleAddClick = () => {
-    setFormData({ name: "", description: "", type: "Đặc sản", provinceId: mockProvinces[0]?.provinceId, estimatedPrice: 0, image: "" });
+    setFormData({ name: "", description: "", type: "Đặc sản", provinceId: provinces[0]?.provinceId || 1, estimatedPrice: 0, image: "" });
     setModal("add");
   };
 
@@ -595,12 +635,12 @@ function AdminFoods() {
         <SearchBar value={search} onChange={setSearch} placeholder="Tìm tên món ăn...">
           <select value={province} onChange={(e) => setProvince(e.target.value)} className="input-field" style={{ width: "auto", padding: "9px 14px" }}>
             <option value="Tất cả">Tất cả tỉnh</option>
-            {mockProvinces.map((p) => <option key={p.provinceId} value={p.name}>{p.name}</option>)}
+            {provinces.map((p) => <option key={p.provinceId} value={p.name}>{p.name}</option>)}
           </select>
         </SearchBar>
         <Tbl headers={["Tên món", "Tỉnh", "Loại", "Giá ước tính", ""]} empty={filtered.length === 0}>
           {filtered.map((f) => {
-            const prov  = getProvince(f.provinceId);
+            const prov  = provinces.find(p => p.provinceId === f.provinceId);
             return (
               <Tr key={f.foodId}>
                 <Td>
@@ -696,10 +736,7 @@ function AdminProvinces() {
       setProvinces(sortedData);
     } catch (err) {
       console.error('fetch provinces', err);
-      // fallback to mock data if backend not available
-      const activeMock = mockProvinces.filter(p => !deletedProvinces.some(dp => dp.provinceId === p.provinceId));
-      const sortedMock = activeMock.sort((a, b) => a.provinceId - b.provinceId);
-      setProvinces(sortedMock);
+      setProvinces([]);
     }
   };
 
@@ -1068,13 +1105,6 @@ export default function AdminPages() {
         </nav>
 
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border-light)" }}>
-          {[["📍", mockLocations.length, "địa điểm"], ["📋", mockBookings.length, "bookings"]].map(([e, v, l]) => (
-            <div key={l} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 14 }}>{e}</span>
-              <span style={{ fontWeight: 800, fontSize: 13 }}>{v}</span>
-              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{l}</span>
-            </div>
-          ))}
           <button 
             onClick={() => {
               logout();
@@ -1111,10 +1141,24 @@ export {
 };
 
 export function AdminTransport() {
-  const [transports, setTransports] = useState(mockTransportTypes);
+  const [transports, setTransports] = useState([]);
   const [modal, setModal] = useState(null);
   const [formData, setFormData] = useState({});
   const [confirm, setConfirm] = useState(null);
+
+  // Load transports from API
+  useEffect(() => {
+    const loadTransports = async () => {
+      try {
+        const data = await getTransports();
+        setTransports(data || []);
+      } catch (err) {
+        console.error("Error loading transports:", err);
+        setTransports([]);
+      }
+    };
+    loadTransports();
+  }, []);
 
   const handleAddClick = () => {
     setFormData({ name: "", costPerKm: 0 });

@@ -1,29 +1,39 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import {
-  getLocation, getProvince, getToursByLocation,
-  getReviewsByTour, formatPrice, avgRating, getUserById, getFullName,
-} from "../../data/mockData";
-import { Ic, StarRating } from "../../components/UI";
+import { getLocationById, getProvinceById, formatPrice } from "../../services/api";
+import { Ic, StarRating, EmptyState } from "../../components/UI";
 
 export default function LocationDetail() {
   const { id } = useParams();
-  const locationId = parseInt(id);
-  const loc      = getLocation(locationId);
-  const province = loc ? getProvince(loc.provinceId) : null;
+  const [location, setLocation] = useState(null);
+  const [province, setProvince] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  if (!loc) {
+  useEffect(() => {
+    const loadLocationData = async () => {
+      setIsLoading(true);
+      const loc = await getLocationById(id);
+      if (loc) {
+        setLocation(loc);
+        const prov = await getProvinceById(loc.provinceId);
+        setProvince(prov);
+      }
+      setIsLoading(false);
+    };
+    loadLocationData();
+  }, [id]);
+
+  if (isLoading) {
+    return <EmptyState emoji="⏳" title="Đang tải..." />;
+  }
+
+  if (!location) {
     return <div className="page-wrap">Không tìm thấy địa điểm.</div>;
   }
 
-  const tours = getToursByLocation(locationId);
-
-  // Tổng hợp reviews từ tất cả tours liên quan
-  const reviews = tours.flatMap((t) => getReviewsByTour(t.tourId));
-  const rating  = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const loc = location;
 
   return (
     <div>
@@ -54,11 +64,6 @@ export default function LocationDetail() {
             }}>
               {loc.type}
             </span>
-            {rating && (
-              <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#fbbf24", fontSize: 14, fontWeight: 700 }}>
-                ★ {rating} ({reviews.length} đánh giá)
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -71,7 +76,7 @@ export default function LocationDetail() {
           <div style={{ display: "flex", gap: 14, marginBottom: 32, flexWrap: "wrap" }}>
             {[
               ["📍", "Tỉnh/thành",         province?.name || "—"],
-              ["🕐", "Thời điểm lý tưởng", loc.bestTimeToVisit],
+              ["🕐", "Thời điểm lý tưởng", loc.bestTimeToVisit || loc.niceTime || "—"],
               ["💰", "Chi phí ước tính",   formatPrice(loc.estimatedCost) + "/người"],
             ].map(([e, l, v]) => (
               <div key={l} style={{
@@ -90,39 +95,6 @@ export default function LocationDetail() {
             <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 14 }}>Giới thiệu</h2>
             <p style={{ color: "var(--text-muted)", lineHeight: 1.8, fontSize: 15 }}>{loc.description}</p>
           </div>
-
-          {/* Reviews */}
-          {reviews.length > 0 && (
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Đánh giá từ khách hàng</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {reviews.map((r) => {
-                  const u    = getUserById(r.userId);
-                  const name = getFullName(u);
-                  return (
-                    <div key={r.id} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                          <div style={{
-                            width: 38, height: 38, borderRadius: "50%",
-                            background: "linear-gradient(135deg,var(--primary),var(--secondary))",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            color: "#fff", fontWeight: 800, fontSize: 15,
-                          }}>{name[0]}</div>
-                          <div>
-                            <div style={{ fontWeight: 700, fontSize: 14 }}>{name}</div>
-                            <StarRating rating={r.rating} size={13} />
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 12, color: "var(--text-light)" }}>{r.createdAt}</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7 }}>{r.comment}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right sidebar */}
@@ -131,16 +103,16 @@ export default function LocationDetail() {
             background: "linear-gradient(135deg,var(--primary),var(--secondary))",
             borderRadius: "var(--radius-xl)", padding: 28, color: "#fff", marginBottom: 16,
           }}>
-            <h3 style={{ fontSize: 18, marginBottom: 8 }}>Đặt tour ngay</h3>
+            <h3 style={{ fontSize: 18, marginBottom: 8 }}>Tạo tour khám phá</h3>
             <p style={{ opacity: 0.85, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-              Có {tours.length} tour ghé thăm {loc.name}. Đặt sớm để nhận ưu đãi!
+              Tạo tour của riêng bạn và thêm địa điểm này vào hành trình du lịch.
             </p>
             <Link
               to={user ? `/create-tour` : "/login"}
               className="btn"
               style={{ width: "100%", background: "#fff", color: "var(--primary)", fontWeight: 700, justifyContent: "center" }}
             >
-              {user ? "Tạo tour" : "Đăng nhập để đặt"}
+              {user ? "Tạo tour mới" : "Đăng nhập"}
             </Link>
           </div>
 
@@ -149,9 +121,8 @@ export default function LocationDetail() {
             {[
               ["🏙️ Tỉnh/thành:",  province?.name || "—"],
               ["🏷️ Loại hình:",   loc.type],
-              ["🏕️ Số tour:",     `${tours.length} tour`],
               ["💰 Chi phí từ:",  formatPrice(loc.estimatedCost)],
-              ["🌤️ Lý tưởng:",   loc.bestTimeToVisit],
+              ["🌤️ Lý tưởng:",   loc.bestTimeToVisit || loc.niceTime || "—"],
             ].map(([l, v]) => (
               <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border-light)", fontSize: 13 }}>
                 <span style={{ color: "var(--text-muted)" }}>{l}</span>

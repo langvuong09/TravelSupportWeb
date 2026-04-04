@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { mockLocations, mockProvinces } from "../../data/mockData";
+import { getLocations, getProvinces } from "../../services/api";
 import LocationCard from "../../components/LocationCard";
 import { Ic, EmptyState } from "../../components/UI";
 
@@ -9,14 +9,28 @@ const TYPES = ["Tất cả", "Thiên nhiên", "Văn hóa", "Biển đảo", "Ngh
 export default function Locations() {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
-  const [type, setType]     = useState("Tất cả");
+  const [type, setType] = useState("Tất cả");
   const [province, setProvince] = useState("Tất cả");
+  const [locations, setLocations] = useState([]);
+  const [provinces, setProvinces] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = mockLocations.filter((loc) => {
-    const prov = mockProvinces.find((p) => p.provinceId === loc.provinceId);
-    const matchType     = type === "Tất cả" || loc.type === type;
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      const [locs, provs] = await Promise.all([getLocations(), getProvinces()]);
+      setLocations(locs);
+      setProvinces(provs);
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
+
+  const filtered = locations.filter((loc) => {
+    const prov = provinces.find((p) => p.provinceId === loc.provinceId);
+    const matchType = type === "Tất cả" || loc.type === type;
     const matchProvince = province === "Tất cả" || prov?.name === province;
-    const matchSearch   =
+    const matchSearch =
       loc.name.toLowerCase().includes(search.toLowerCase()) ||
       prov?.name.toLowerCase().includes(search.toLowerCase());
     return matchType && matchProvince && matchSearch;
@@ -69,7 +83,7 @@ export default function Locations() {
             style={{ width: "auto", padding: "9px 14px" }}
           >
             <option value="Tất cả">Tất cả tỉnh thành</option>
-            {mockProvinces.map((p) => (
+            {provinces.map((p) => (
               <option key={p.provinceId} value={p.name}>{p.name}</option>
             ))}
           </select>
@@ -78,10 +92,12 @@ export default function Locations() {
 
       {/* Results */}
       <div style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 16 }}>
-        Tìm thấy <strong style={{ color: "var(--text)" }}>{filtered.length}</strong> địa điểm
+        {isLoading ? "Đang tải..." : `Tìm thấy ${filtered.length} địa điểm`}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <EmptyState emoji="⏳" title="Đang tải dữ liệu..." />
+      ) : filtered.length === 0 ? (
         <EmptyState emoji="🗺️" title="Không tìm thấy địa điểm" desc="Thử thay đổi từ khoá hoặc bộ lọc" />
       ) : (
         <div className="grid-3 stagger">

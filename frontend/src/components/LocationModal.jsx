@@ -1,6 +1,6 @@
 import React, { useEffect,useState } from "react";
 import FormModal from "./FormModal";
-import { mockProvinces } from "../data/mockData";
+import { getProvinces } from "../services/api";
 import "../styles/AdminModal.css";
 
 export default function LocationModal({ mode, data, onSave, onClose, onSaved }) {
@@ -9,12 +9,15 @@ export default function LocationModal({ mode, data, onSave, onClose, onSaved }) 
   const [provinces, setProvinces] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/provinces")
-      .then(res => res.json())
-      .then(data => {
-        setProvinces(data);
-      })      
-    .catch(err => console.error(err));
+    const loadProvinces = async () => {
+      try {
+        const provs = await getProvinces();
+        setProvinces(provs);
+      } catch (err) {
+        console.error("Error loading provinces:", err);
+      }
+    };
+    loadProvinces();
   }, []);
   useEffect(() => {
     setFormData(data || {});

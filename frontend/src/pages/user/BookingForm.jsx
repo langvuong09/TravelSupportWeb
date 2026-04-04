@@ -1,34 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import {
-  getTour, getLocationsByTour, getProvincesByTour,
-  getTourThumbnail, getTourEstimatedCost, formatPrice,
-} from "../../data/mockData";
+import { getTourFullDetails, formatPrice } from "../../services/api";
 import { Ic } from "../../components/UI";
 
 export default function BookingForm() {
   const { tourId } = useParams();
-  const tour       = getTour(tourId); // tourId là string rồi
-  const { user }   = useAuth();
-  const nav        = useNavigate();
+  const { user } = useAuth();
+  const nav = useNavigate();
 
-  const locations  = tour ? getLocationsByTour(tourId) : [];
-  const provinces  = tour ? getProvincesByTour(tourId) : [];
-  const thumbnail  = tour ? getTourThumbnail(tourId) : null;
-  const baseCost   = tour ? getTourEstimatedCost(tourId) : 0;
-
-  const [num,  setNum]  = useState(1);
+  const [tour, setTour] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [num, setNum] = useState(1);
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     firstName: user?.firstName || "",
-    lastName:  user?.lastName  || "",
-    email:     user?.email     || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
   });
 
+  useEffect(() => {
+    const loadTour = async () => {
+      setLoading(true);
+      const tourData = await getTourFullDetails(tourId);
+      setTour(tourData);
+      setLoading(false);
+    };
+    loadTour();
+  }, [tourId]);
+
+  if (loading) return <div className="page-wrap">Đang tải...</div>;
   if (!tour) return <div className="page-wrap">Không tìm thấy tour.</div>;
 
+  const baseCost = tour.estimatedCost || 0;
   const total = baseCost * num;
 
   const handleSubmit = () => {

@@ -1,13 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useBooking } from "../../context/BookingContext";
-import {
-  mockProvinces,
-  mockLocations,
-  mockFoods,
-  mockTransportTypes,
-  formatPrice,
-} from "../../data/mockData";
+import { getProvinces, getLocations, getFoods, getTransports, formatPrice } from "../../services/api";
 import "../../styles/global.css";
 
 // ── Khoảng cách ước lượng giữa các tỉnh (km) ─────────────────
@@ -184,6 +178,14 @@ export default function CreateTour() {
   const { user } = useAuth();
   const { addBooking } = useBooking();
 
+  // API data states
+  const [allProvinces, setAllProvinces] = useState([]);
+  const [allLocations, setAllLocations] = useState([]);
+  const [allFoods, setAllFoods] = useState([]);
+  const [allTransports, setAllTransports] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  // Selection states
   const [selProvinces, setSelProvinces] = useState([]); // [provinceId, ...]
   const [searchTerm, setSearchTerm]      = useState(""); // ← Search for provinces
   const [people, setPeople]             = useState(1);
@@ -193,28 +195,52 @@ export default function CreateTour() {
   const [tourName, setTourName]         = useState("");
   const [showSuccess, setShowSuccess]   = useState(false);
 
+  // Load data from API
+  useEffect(() => {
+    const loadData = async () => {
+      setLoadingData(true);
+      try {
+        const [provinces, locations, foods, transports] = await Promise.all([
+          getProvinces(),
+          getLocations(),
+          getFoods(),
+          getTransports(),
+        ]);
+        setAllProvinces(provinces);
+        setAllLocations(locations);
+        setAllFoods(foods);
+        setAllTransports(transports);
+      } catch (err) {
+        console.error("Error loading tour creation data:", err);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    loadData();
+  }, []);
+
   // ── Dữ liệu theo tỉnh đã chọn ───────────────────────────────
   const filteredProvinces = useMemo(() => {
-    if (!searchTerm.trim()) return mockProvinces;
+    if (!searchTerm.trim()) return allProvinces;
     const term = searchTerm.toLowerCase();
-    return mockProvinces.filter((p) => p.name.toLowerCase().includes(term));
-  }, [searchTerm]);
+    return allProvinces.filter((p) => p.name.toLowerCase().includes(term));
+  }, [searchTerm, allProvinces]);
 
   const locsByProv  = useMemo(() => {
     const map = {};
     selProvinces.forEach((pid) => {
-      map[pid] = mockLocations.filter((l) => l.provinceId === pid);
+      map[pid] = allLocations.filter((l) => l.provinceId === pid);
     });
     return map;
-  }, [selProvinces]);
+  }, [selProvinces, allLocations]);
 
   const foodsByProv = useMemo(() => {
     const map = {};
     selProvinces.forEach((pid) => {
-      map[pid] = mockFoods.filter((f) => f.provinceId === pid);
+      map[pid] = allFoods.filter((f) => f.provinceId === pid);
     });
     return map;
-  }, [selProvinces]);
+  }, [selProvinces, allFoods]);
 
   const transportPairs = useMemo(() => {
     const pairs = [];
@@ -234,11 +260,11 @@ export default function CreateTour() {
 
     selProvinces.forEach((pid) => {
       (selLocs[pid] || []).forEach((lid) => {
-        const l = mockLocations.find((x) => x.locationId === lid);
+        const l = allLocations.find((x) => x.locationId === lid);
         if (l) locCost += l.estimatedCost || 0;
       });
       (selFoods[pid] || []).forEach((fid) => {
-        const f = mockFoods.find((x) => x.foodId === fid);
+        const f = allFoods.find((x) => x.foodId === fid);
         if (f) transportCost += 0; // food cost tracked separately
         if (f) foodCost += f.estimatedPrice || 0;
       });
@@ -247,7 +273,7 @@ export default function CreateTour() {
     transportPairs.forEach(([a, b]) => {
       const key = `${a}-${b}`;
       const tId = selTransport[key] || 1;
-      const t   = mockTransportTypes.find((x) => x.transportId === tId);
+      const t   = allTransports.find((x) => x.transportId === tId);
       if (t && t.costPerKm > 0) {
         transportCost += t.costPerKm * getDist(a, b);
       }
@@ -255,7 +281,7 @@ export default function CreateTour() {
 
     const perPerson = locCost + foodCost + transportCost;
     return { locCost, foodCost, transportCost, perPerson, total: perPerson * people };
-  }, [selProvinces, selLocs, selFoods, selTransport, people, transportPairs]);
+  }, [selProvinces, selLocs, selFoods, selTransport, people, transportPairs, allLocations, allFoods, allTransports]);
 
   // ── Handlers ─────────────────────────────────────────────────
   const toggleProvince = (pid) => {
@@ -298,7 +324,7 @@ export default function CreateTour() {
   const handleCreate = () => {
     if (selProvinces.length === 0) return;
 
-    const provinces  = selProvinces.map((pid) => mockProvinces.find((p) => p.provinceId === pid)).filter(Boolean);
+    const provinces  = selProvinces.map((pid) => allProvinces.find((p) => p.provinceId === pid)).filter(Boolean);
     const name       = tourName.trim() || `Tour ${provinces.map((p) => p.name).join(" – ")}`;
 
     // Tạo tour ID
@@ -313,14 +339,14 @@ export default function CreateTour() {
       totalPrice: estimate.total,
       // Chi tiết tour
       provinces: selProvinces.map((pid) => {
-        const p = mockProvinces.find((pr) => pr.provinceId === pid);
+        const p = allProvinces.find((pr) => pr.provinceId === pid);
         return { id: pid, name: p?.name, code: p?.code };
       }),
       locations: Object.entries(selLocs).reduce((acc, [pid, locIds]) => {
         return {
           ...acc,
           [pid]: locIds.map((lid) => {
-            const loc = mockLocations.find((l) => l.locationId === lid);
+            const loc = allLocations.find((l) => l.locationId === lid);
             return { id: lid, name: loc?.name, category: loc?.category };
           }),
         };
@@ -329,7 +355,7 @@ export default function CreateTour() {
         return {
           ...acc,
           [pid]: foodIds.map((fid) => {
-            const food = mockFoods.find((f) => f.foodId === fid);
+            const food = allFoods.find((f) => f.foodId === fid);
             return { id: fid, name: food?.name, type: food?.type };
           }),
         };
@@ -337,9 +363,9 @@ export default function CreateTour() {
       transports: transportPairs.map(([a, b]) => {
         const key = `${a}-${b}`;
         const tId = selTransport[key] || 1;
-        const t = mockTransportTypes.find((tr) => tr.transportId === tId);
-        const pA = mockProvinces.find((p) => p.provinceId === a);
-        const pB = mockProvinces.find((p) => p.provinceId === b);
+        const t = allTransports.find((tr) => tr.transportId === tId);
+        const pA = allProvinces.find((p) => p.provinceId === a);
+        const pB = allProvinces.find((p) => p.provinceId === b);
         
         // Tạo icon từ tên phương tiện
         const getTransportIcon = (name) => {
@@ -505,7 +531,7 @@ export default function CreateTour() {
               <p className="ct-empty">Chọn ít nhất 1 tỉnh ở bước 1 để hiện danh sách.</p>
             ) : (
               selProvinces.map((pid, idx) => {
-                const prov  = mockProvinces.find((p) => p.provinceId === pid);
+                const prov  = allProvinces.find((p) => p.provinceId === pid);
                 const locs  = locsByProv[pid]  || [];
                 const foods = foodsByProv[pid] || [];
                 const sLocs  = selLocs[pid]  || [];
@@ -612,8 +638,8 @@ export default function CreateTour() {
             ) : (
               <div className="transport-list">
                 {transportPairs.map(([a, b]) => {
-                  const pA  = mockProvinces.find((p) => p.provinceId === a);
-                  const pB  = mockProvinces.find((p) => p.provinceId === b);
+                  const pA  = allProvinces.find((p) => p.provinceId === a);
+                  const pB  = allProvinces.find((p) => p.provinceId === b);
                   const key = `${a}-${b}`;
                   const cur = selTransport[key] || 1;
                   const dist = getDist(a, b);
@@ -627,7 +653,7 @@ export default function CreateTour() {
                         <span className="tr-dist">~{dist} km</span>
                       </div>
                       <TransportSelector
-                        options={mockTransportTypes}
+                        options={allTransports}
                         value={cur}
                         onChange={(tId) =>
                           setSelTransport((prev) => ({
@@ -655,7 +681,7 @@ export default function CreateTour() {
               placeholder={
                 selProvinces.length > 0
                   ? `Tour ${selProvinces
-                      .map((pid) => mockProvinces.find((p) => p.provinceId === pid)?.name)
+                      .map((pid) => allProvinces.find((p) => p.provinceId === pid)?.name)
                       .join(" – ")}`
                   : "Nhập tên tour của bạn..."
               }
@@ -694,7 +720,7 @@ export default function CreateTour() {
             {selProvinces.length > 0 && (
               <div className="sidebar-route">
                 {selProvinces.map((pid, i) => {
-                  const p = mockProvinces.find((x) => x.provinceId === pid);
+                  const p = allProvinces.find((x) => x.provinceId === pid);
                   return (
                     <span key={pid} className="sidebar-route-item">
                       <span className="sidebar-order">{i + 1}</span>
