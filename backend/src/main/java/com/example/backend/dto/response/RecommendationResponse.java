@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 public class RecommendationResponse {
     private String message;
     private boolean coldStart;
-    private String model;
     private List<RecommendationItemResponse> recommendations = new ArrayList<>();
 }

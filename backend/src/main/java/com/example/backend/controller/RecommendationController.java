@@ -32,41 +32,45 @@ public class RecommendationController {
     @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public RecommendationResponse getRecommendationsForm(@RequestParam(required = false) String query,
                                                          @RequestParam(required = false) Long userId,
-                                                         @RequestParam(required = false) String region,
                                                          @RequestParam(required = false) String budget,
                                                          @RequestParam(required = false) Integer days,
                                                          @RequestParam(required = false) String style,
+                                                         @RequestParam(required = false) Integer participants,
+                                                         @RequestParam(required = false) java.util.List<Integer> provinceIds,
                                                          @RequestParam(required = false) Integer topK) {
-        RecommendationRequest request = buildRequest(query, userId, region, budget, days, style, topK);
+        RecommendationRequest request = buildRequest(query, userId, budget, days, style, participants, provinceIds, topK);
         return recommendationService.recommend(request);
     }
 
     @GetMapping
     public RecommendationResponse getRecommendationsByQuery(@RequestParam(required = false) String query,
                                                             @RequestParam(required = false) Long userId,
-                                                            @RequestParam(required = false) String region,
                                                             @RequestParam(required = false) String budget,
                                                             @RequestParam(required = false) Integer days,
                                                             @RequestParam(required = false) String style,
+                                                            @RequestParam(required = false) Integer participants,
+                                                            @RequestParam(required = false) java.util.List<Integer> provinceIds,
                                                             @RequestParam(required = false) Integer topK) {
-        RecommendationRequest request = buildRequest(query, userId, region, budget, days, style, topK);
+        RecommendationRequest request = buildRequest(query, userId, budget, days, style, participants, provinceIds, topK);
         return recommendationService.recommend(request);
     }
 
     private RecommendationRequest buildRequest(String query,
                                                Long userId,
-                                               String region,
                                                String budget,
                                                Integer days,
                                                String style,
+                                               Integer participants,
+                                               java.util.List<Integer> provinceIds,
                                                Integer topK) {
         RecommendationRequest request = new RecommendationRequest();
         request.setQuery(query);
         request.setUserId(userId);
-        request.setRegion(region);
         request.setBudget(budget);
         request.setDays(days);
         request.setStyle(style);
+        request.setParticipants(participants);
+        request.setProvinceIds(provinceIds);
         request.setTopK(topK);
         return request;
     }

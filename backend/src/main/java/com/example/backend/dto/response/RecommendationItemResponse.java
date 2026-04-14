@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class RecommendationItemResponse {
+    private Long userId;
     private String tourId;
     private String tourName;
     private Integer locationId;
