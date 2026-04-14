@@ -130,6 +130,15 @@
   margin: 0;
 }
 
+.ai-role-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px !important;
+  opacity: 0.8;
+}
+
 .ai-bubble.ai {
   align-self: flex-start;
   background: #fff;
@@ -142,6 +151,10 @@
   color: #fff;
 }
 
+.ai-bubble.user .ai-role-label {
+  opacity: 0.92;
+}
+
 .ai-recommendations {
   margin-top: 8px;
   display: flex;
@@ -150,20 +163,11 @@
 }
 
 .ai-rec-item {
-  display: grid;
-  grid-template-columns: 68px 1fr;
-  gap: 9px;
+  display: block;
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
-}
-
-.ai-rec-item img {
-  width: 68px;
-  height: 58px;
-  object-fit: cover;
-  border-radius: 8px;
 }
 
 .ai-rec-item strong {
@@ -179,6 +183,10 @@
   margin-top: 2px;
 }
 
+.ai-rec-item .ai-reason {
+  word-break: break-word;
+}
+
 .ai-rec-actions {
   display: flex;
   gap: 6px;
@@ -192,6 +200,11 @@
   border-radius: 7px;
   font-size: 11px;
   padding: 4px 7px;
+}
+
+.ai-rec-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .ai-input {
