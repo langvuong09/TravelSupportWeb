@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useBooking } from "../../context/BookingContext";
 import {
@@ -8,6 +9,10 @@ import {
   getTransports,
   formatPrice,
 } from "../../services/api";
+import {
+  parseRecommendationProvinces,
+  findLocationByName,
+} from "../../services/locationHelpers";
 import "../../styles/global.css";
 
 // ── Khoảng cách ước lượng giữa các tỉnh (km) ─────────────────
@@ -341,6 +346,10 @@ export default function CreateTour() {
   const [selTransport, setSelTransport] = useState({}); // {"a-b": transportId}
   const [tourName, setTourName] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [prefilledFromRecommendation, setPrefilledFromRecommendation] =
+    useState(false);
+  const location = useLocation();
+  const initialRecommendation = location.state?.recommendation;
 
   // Load data from API
   useEffect(() => {
@@ -365,6 +374,65 @@ export default function CreateTour() {
     };
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!loadingData && initialRecommendation && !prefilledFromRecommendation) {
+      if (initialRecommendation.tourName) {
+        setTourName(initialRecommendation.tourName);
+      }
+
+      if (
+        initialRecommendation.duration_days != null &&
+        !Number.isNaN(initialRecommendation.duration_days)
+      ) {
+        setDays(initialRecommendation.duration_days);
+      }
+
+      let provinceIds = Array.isArray(initialRecommendation.provinceId)
+        ? initialRecommendation.provinceId.filter((id) => Number.isInteger(id))
+        : [];
+
+      let location = null;
+      if (initialRecommendation.locationId != null) {
+        location = allLocations.find(
+          (item) => item.locationId === initialRecommendation.locationId,
+        );
+      }
+
+      if (!location && initialRecommendation.locationName) {
+        location = findLocationByName(
+          initialRecommendation.locationName,
+          allLocations,
+        );
+      }
+
+      if (location) {
+        provinceIds = Array.from(
+          new Set([...(provinceIds || []), location.provinceId]),
+        );
+        setSelLocs({ [location.provinceId]: [location.locationId] });
+      }
+
+      if (!provinceIds.length && initialRecommendation.province) {
+        provinceIds = parseRecommendationProvinces(
+          initialRecommendation.province,
+          allProvinces,
+        );
+      }
+
+      if (provinceIds.length > 0) {
+        setSelProvinces(provinceIds);
+      }
+
+      setPrefilledFromRecommendation(true);
+    }
+  }, [
+    loadingData,
+    initialRecommendation,
+    allLocations,
+    allProvinces,
+    prefilledFromRecommendation,
+  ]);
 
   // ── Dữ liệu theo tỉnh đã chọn ───────────────────────────────
   const filteredProvinces = useMemo(() => {
@@ -650,7 +718,7 @@ export default function CreateTour() {
           <div className="ct-card">
             <div className="ct-card-header">
               <StepBadge n="1" active={selProvinces.length > 0} />
-              <span className="ct-card-title">Chọn tỉnh / thành phố</span>
+              <span className="ct-card-title">Chọn tỉnh</span>
             </div>
 
             {/* Search bar */}

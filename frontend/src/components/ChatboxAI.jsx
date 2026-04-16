@@ -10,95 +10,15 @@ function FormField({ label, children }) {
 }
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getRecommendations } from "../services/api";
+import { parseProvinceNamesToIds } from "../services/locationHelpers";
 import { Ic } from "./UI";
 import "./ChatboxAI.css";
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 const DEFAULT_WELCOME = {
   id: "m0",
   role: "ai",
   text: "Xin chào bạn. Mình là Travel AI Assistant, sẵn sàng gợi ý tour phù hợp theo ngân sách, số ngày và sở thích của bạn.",
-};
-
-const PROVINCE_NAME_TO_ID = {
-  "lào cai": 1,
-  "lao cai": 1,
-  "yên bái": 2,
-  "yen bai": 2,
-  "tuyên quang": 3,
-  "tuyen quang": 3,
-  "thái nguyên": 4,
-  "thai nguyen": 4,
-  "phú thọ": 5,
-  "phu tho": 5,
-  "bắc giang": 6,
-  "bac giang": 6,
-  "bắc ninh": 7,
-  "bac ninh": 7,
-  "hải phòng": 8,
-  "hai phong": 8,
-  "hưng yên": 9,
-  "hung yen": 9,
-  "ninh bình": 10,
-  "ninh binh": 10,
-  "quảng trị": 11,
-  "quang tri": 11,
-  "quảng bình": 12,
-  "quang binh": 12,
-  "đà nẵng": 13,
-  "da nang": 13,
-  "quảng ngãi": 14,
-  "quang ngai": 14,
-  "gia lai": 15,
-  "gia lai": 15,
-  "đắk lắk": 16,
-  "dak lak": 16,
-  "lâm đồng": 17,
-  "lam dong": 17,
-  "khánh hòa": 18,
-  "khanh hoa": 18,
-  "đồng nai": 19,
-  "dong nai": 19,
-  "tây ninh": 20,
-  "tay ninh": 20,
-  "tp hồ chí minh": 21,
-  "thành phố hồ chí minh": 21,
-  "ho chi minh": 21,
-  hcm: 21,
-  "sài gòn": 21,
-  "sai gon": 21,
-  "đồng tháp": 22,
-  "dong thap": 22,
-  "vĩnh long": 23,
-  "vinh long": 23,
-  "an giang": 24,
-  "an giang": 24,
-  "tp cần thơ": 25,
-  "thành phố cần thơ": 25,
-  "can tho": 25,
-  "cà mau": 26,
-  "ca mau": 26,
-  "sơn la": 27,
-  "son la": 27,
-  "thanh hóa": 28,
-  "thanh hoa": 28,
-  "hà tĩnh": 29,
-  "ha tinh": 29,
-  "thừa thiên huế": 30,
-  "thua thien hue": 30,
-  huế: 30,
-  hue: 30,
-  "bình định": 31,
-  "binh dinh": 31,
-  "bình dương": 32,
-  "binh duong": 32,
-  "bà rịa vũng tàu": 33,
-  "ba ria vung tau": 33,
-  "vũng tàu": 33,
-  "vung tau": 33,
-  "hà nội": 34,
-  "ha noi": 34,
 };
 
 const QUICK_QUESTIONS = [
@@ -107,16 +27,6 @@ const QUICK_QUESTIONS = [
   "Lịch trình nghỉ dưỡng cho cặp đôi",
   "Tour khám phá cho nhóm bạn 4 người",
 ];
-
-// Cho phép nhập tên tỉnh/thành, trả về mảng provinceId
-function parseProvinceNamesToIds(value) {
-  if (!value?.trim()) return [];
-  return value
-    .split(",")
-    .map((v) => v.trim().toLowerCase())
-    .map((name) => PROVINCE_NAME_TO_ID[name])
-    .filter((id) => !!id);
-}
 
 function fmtScore(value) {
   if (typeof value !== "number" || isNaN(value)) return "-";
@@ -152,16 +62,6 @@ export default function ChatboxAI() {
     ]);
   }
 
-  async function requestRecommendations(payload) {
-    const res = await fetch(`${API_BASE}/api/recommendations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error("Request failed");
-    return await res.json();
-  }
-
   // Cho phép người dùng nhập "tỉnh: Hà Nội, Đà Nẵng" hoặc "tỉnh thành: ..."
   const askAI = async (text) => {
     if (!text.trim()) return;
@@ -188,7 +88,7 @@ export default function ChatboxAI() {
 
     try {
       setLoading(true);
-      const data = await requestRecommendations({
+      const data = await getRecommendations({
         userId: user?.user_id || null,
         query: queryText,
         provinceIds,
@@ -221,7 +121,7 @@ export default function ChatboxAI() {
   const runStructuredSuggestion = async () => {
     try {
       setLoading(true);
-      const data = await requestRecommendations({
+      const data = await getRecommendations({
         userId: user?.user_id || null,
         budget: pref.budget,
         days: pref.days,
@@ -316,21 +216,45 @@ export default function ChatboxAI() {
                       <div className="ai-recommendations">
                         {m.recommendations.map((r) => (
                           <div key={r.tourId} className="ai-rec-item">
-                            <div>
-                              <strong>
-                                {r.tourName || `Tour ${r.tourId || ""}`}
-                              </strong>
+                            {r.image ? (
+                              <img
+                                className="ai-rec-image"
+                                src={r.image}
+                                alt={r.tourName}
+                              />
+                            ) : null}
+                            <div className="ai-rec-content">
+                              <strong>{r.tourName}</strong>
                               <span>
-                                Hybrid: {fmtScore(r.hybridScore)} · CF:{" "}
-                                {fmtScore(r.cfScore)} · CBF:{" "}
-                                {fmtScore(r.cbfScore)}
+                                {r.locationName}
+                                {r.province ? `, ${r.province}` : ""}
                               </span>
-                              <span className="ai-reason">
-                                {r.reason || "python-ai"}
-                              </span>
+                              {r.price ? (
+                                <span>
+                                  Giá tham khảo:{" "}
+                                  {new Intl.NumberFormat("vi-VN").format(
+                                    r.price,
+                                  )}
+                                  đ
+                                </span>
+                              ) : null}
+                              {r.startDate || r.endDate ? (
+                                <span>
+                                  {r.startDate || ""}
+                                  {r.startDate && r.endDate ? " - " : ""}
+                                  {r.endDate || ""}
+                                </span>
+                              ) : null}
+
                               <div className="ai-rec-actions">
                                 <button
-                                  onClick={() => nav(`/book/${r.tourId}`)}
+                                  onClick={() =>
+                                    nav(`/create-tour`, {
+                                      state: {
+                                        recommendation: r,
+                                      },
+                                    })
+                                  }
                                   disabled={!r.tourId}
                                 >
                                   Đặt tour
@@ -366,7 +290,7 @@ export default function ChatboxAI() {
                 cầu của bạn.
               </p>
 
-              <FormField label="Tỉnh/Thành phố">
+              <FormField label="Nhập tên tỉnh muốn đến">
                 <input
                   value={pref.provinceInput}
                   onChange={(e) =>
