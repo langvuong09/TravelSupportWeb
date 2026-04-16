@@ -6,11 +6,13 @@ import com.example.backend.dto.request.RecommendationRequest;
 import com.example.backend.dto.response.RecommendationItemResponse;
 import com.example.backend.dto.response.RecommendationResponse;
 import com.example.backend.entity.Location;
+import com.example.backend.entity.Province;
 import com.example.backend.entity.Tour;
 import com.example.backend.entity.TourLocation;
 import com.example.backend.entity.TourProvince;
 import com.example.backend.entity.UserInteraction;
 import com.example.backend.repository.LocationRepository;
+import com.example.backend.repository.ProvinceRepository;
 import com.example.backend.repository.TourLocationRepository;
 import com.example.backend.repository.TourProvinceRepository;
 import com.example.backend.repository.TourRepository;
@@ -43,17 +45,20 @@ public class RecommendationService {
     private final TourProvinceRepository tourProvinceRepository;
     private final TourLocationRepository tourLocationRepository;
     private final LocationRepository locationRepository;
+    private final ProvinceRepository provinceRepository;
     private final UserInteractionRepository userInteractionRepository;
 
     public RecommendationService(TourRepository tourRepository,
                                  TourProvinceRepository tourProvinceRepository,
                                  TourLocationRepository tourLocationRepository,
                                  LocationRepository locationRepository,
+                                 ProvinceRepository provinceRepository,
                                  UserInteractionRepository userInteractionRepository) {
         this.tourRepository = tourRepository;
         this.tourProvinceRepository = tourProvinceRepository;
         this.tourLocationRepository = tourLocationRepository;
         this.locationRepository = locationRepository;
+        this.provinceRepository = provinceRepository;
         this.userInteractionRepository = userInteractionRepository;
     }
 
@@ -85,7 +90,7 @@ public class RecommendationService {
                 }
             );
 
-            return mapAiResponse(aiResponse);
+            return mapAiResponse(aiResponse, safeRequest);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             RecommendationResponse failure = new RecommendationResponse();
@@ -133,6 +138,8 @@ public class RecommendationService {
         List<TourLocation> tourLocations = tourLocationRepository.findAll();
         Map<Integer, Location> locationById = locationRepository.findAll().stream()
                 .collect(Collectors.toMap(Location::getLocationId, l -> l, (a, b) -> a));
+        Map<Integer, Province> provinceById = provinceRepository.findAll().stream()
+                .collect(Collectors.toMap(Province::getProvinceId, p -> p, (a, b) -> a));
 
         Map<String, List<Integer>> provinceIdsByTour = new HashMap<>();
         for (TourProvince tp : tourProvinces) {
@@ -160,10 +167,18 @@ public class RecommendationService {
             Set<String> styles = new HashSet<>();
             String locationName = "";
             String provinceName = "";
-            for (Integer locationId : locationIds) {
-                Location location = locationById.get(locationId);
+            Integer locationId = null;
+            String image = null;
+            List<String> provinceNames = new ArrayList<>();
+            for (Integer locId : locationIds) {
+                Location location = locationById.get(locId);
                 if (location == null) {
                     continue;
+                }
+                if (locationName.isBlank()) {
+                    locationName = Objects.toString(location.getName(), "");
+                    locationId = location.getLocationId();
+                    image = location.getImage();
                 }
                 estimatedPrice += Math.max(0, Objects.requireNonNullElse(location.getEstimatedCost(), 0));
                 if (location.getType() != null && !location.getType().isBlank()) {
@@ -172,10 +187,15 @@ public class RecommendationService {
                 if (location.getNiceTime() != null && !location.getNiceTime().isBlank()) {
                     styles.add(location.getNiceTime().toLowerCase());
                 }
-                if (locationName.isBlank()) {
-                    locationName = Objects.toString(location.getName(), "");
+            }
+
+            for (Integer provinceId : provinceIds) {
+                Province province = provinceById.get(provinceId);
+                if (province != null && province.getName() != null && !province.getName().isBlank()) {
+                    provinceNames.add(province.getName());
                 }
             }
+            provinceName = String.join(", ", provinceNames);
 
             if (estimatedPrice <= 0) {
                 estimatedPrice = Math.max(1, provinceIds.size()) * 1_500_000;
@@ -188,9 +208,11 @@ public class RecommendationService {
             candidate.put("tour_id", Objects.toString(tourId, ""));
             candidate.put("tour_name", safe(tour.getName(), "Tour " + Objects.toString(tourId, "")));
             candidate.put("province_ids", provinceIds);
+            candidate.put("location_id", locationId);
             candidate.put("location_name", locationName);
-            candidate.put("province_name", provinceName);
-            candidate.put("estimated_price", estimatedPrice);
+            candidate.put("province", provinceName);
+            candidate.put("image", image);
+            candidate.put("price", estimatedPrice);
             candidate.put("duration_days", durationDays);
             candidate.put("styles", new ArrayList<>(styles));
             candidate.put("popularity", popularity);
@@ -225,7 +247,7 @@ public class RecommendationService {
                 .toList();
     }
 
-    private RecommendationResponse mapAiResponse(Map<String, Object> root) {
+    private RecommendationResponse mapAiResponse(Map<String, Object> root, RecommendationRequest request) {
         RecommendationResponse response = new RecommendationResponse();
         if (root == null) {
             response.setColdStart(true);
@@ -233,6 +255,11 @@ public class RecommendationService {
             response.setMessage("ai-service trả về dữ liệu rỗng");
             return response;
         }
+
+        List<Map<String, Object>> candidates = buildCandidates();
+        Map<String, Map<String, Object>> candidateMap = candidates.stream()
+                .filter(c -> c.get("tour_id") != null)
+                .collect(Collectors.toMap(c -> Objects.toString(c.get("tour_id"), ""), c -> c));
 
         List<RecommendationItemResponse> recommendations = new ArrayList<>();
         Object recObj = root.get("recommendations");
@@ -243,12 +270,32 @@ public class RecommendationService {
                 }
 
                 RecommendationItemResponse item = new RecommendationItemResponse();
+                item.setUserId(parseLong(rec.get("user_id"), request.getUserId()));
                 item.setTourId(Objects.toString(rec.get("tour_id"), ""));
                 item.setTourName(Objects.toString(rec.get("tour_name"), ""));
+                item.setLocationId(parseInteger(rec.get("location_id")));
+                item.setLocationName(Objects.toString(rec.get("location_name"), null));
+                item.setProvince(Objects.toString(rec.get("province"), null));
+                item.setImage(Objects.toString(rec.get("image"), null));
+                item.setPrice(parseInteger(rec.get("price")));
+                item.setStartDate(Objects.toString(rec.get("start_date"), null));
+                item.setEndDate(Objects.toString(rec.get("end_date"), null));
                 item.setHybridScore(parseDouble(rec.get("score")));
                 item.setReason(Objects.toString(rec.get("reason"), "python-ai"));
                 item.setCfScore(parseDouble(rec.get("cf_score")));
                 item.setCbfScore(parseDouble(rec.get("cbf_score")));
+
+                if ((item.getLocationName() == null || item.getLocationName().isBlank()) && candidateMap.containsKey(item.getTourId())) {
+                    Map<String, Object> candidate = candidateMap.get(item.getTourId());
+                    item.setLocationName(Objects.toString(candidate.get("location_name"), null));
+                    item.setProvince(Objects.toString(candidate.get("province"), null));
+                    item.setImage(Objects.toString(candidate.get("image"), null));
+                    item.setPrice(parseInteger(candidate.get("price")));
+                    item.setLocationId(parseInteger(candidate.get("location_id")));
+                }
+                if (item.getUserId() == null) {
+                    item.setUserId(request.getUserId());
+                }
                 recommendations.add(item);
             }
         }
@@ -256,9 +303,32 @@ public class RecommendationService {
         response.setColdStart(recommendations.isEmpty());
         response.setRecommendations(recommendations);
         response.setMessage(recommendations.isEmpty()
-                ? "ai-service chưa trả về đề xuất phù hợp."
-                : "Đề xuất được xử lý hoàn toàn bởi ai-service.");
+                ? "Chưa có tour phù hợp theo nhu cầu của bạn"
+                : "Thông tin đề xuất chi tiết");
         return response;
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        try {
+            return Integer.parseInt(Objects.toString(value, ""));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private Long parseLong(Object value, Long fallback) {
+        if (value instanceof Number n) {
+            return n.longValue();
+        }
+        try {
+            String s = Objects.toString(value, "");
+            return s.isBlank() ? fallback : Long.parseLong(s);
+        } catch (Exception ex) {
+            return fallback;
+        }
     }
 
     private double parseDouble(Object value) {
