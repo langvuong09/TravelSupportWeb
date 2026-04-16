@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -7,13 +7,18 @@ class CandidateTour(BaseModel):
     tour_id: str
     tour_name: str
     province_ids: List[int] = Field(default_factory=list)
+    location_id: Optional[int] = None
     location_name: str = ""
     province_name: str = ""
+    province: str = ""
+    image: Optional[str] = None
     estimated_price: int = 0
+    price: int = 0
     duration_days: int = 1
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     styles: List[str] = Field(default_factory=list)
     popularity: float = 0.45
-
 
 
 class InteractionEvent(BaseModel):
@@ -38,8 +43,16 @@ class PredictRequest(BaseModel):
 
 
 class PredictionItem(BaseModel):
+    user_id: Optional[int] = None
     tour_id: str
     tour_name: str
+    location_id: Optional[int] = None
+    location_name: str = ""
+    province: str = ""
+    image: Optional[str] = None
+    price: int = 0
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     score: float
     cf_score: float = 0.0
     cbf_score: float = 0.0
@@ -48,7 +61,3 @@ class PredictionItem(BaseModel):
 
 class PredictResponse(BaseModel):
     recommendations: List[PredictionItem] = Field(default_factory=list)
-    data_overviexw: Dict[str, Any] = Field(default_factory=dict)
-    cleaning_report: Dict[str, Any] = Field(default_factory=dict)
-    normalization_report: Dict[str, Any] = Field(default_factory=dict)
-    visualizations: Dict[str, Any] = Field(default_factory=dict)
