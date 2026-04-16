@@ -25,7 +25,9 @@ export const getLocationById = async (id) => {
 
 export const getLocationsByProvince = async (provinceId) => {
   try {
-    const res = await fetch(`${API_BASE}/api/locations/by-province/${provinceId}`);
+    const res = await fetch(
+      `${API_BASE}/api/locations/by-province/${provinceId}`,
+    );
     if (!res.ok) throw new Error("Failed to fetch locations by province");
     return await res.json();
   } catch (err) {
@@ -88,6 +90,26 @@ export const getTourFullDetails = async (id) => {
   } catch (err) {
     console.error("Error fetching tour details:", err);
     return null;
+  }
+};
+
+export const getRecommendations = async (payload) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/recommendations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.message || "Failed to fetch recommendations");
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching recommendations:", err);
+    return { message: err.message, recommendations: [] };
   }
 };
 
@@ -303,4 +325,6 @@ export const createTransport = async (transportData) => {
 
 // ==================== HELPERS ====================
 export const formatPrice = (p) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(p);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    p,
+  );

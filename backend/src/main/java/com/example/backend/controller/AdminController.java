@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +27,7 @@ public class AdminController {
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "users", users.stream().map(user -> Map.of(
-                    "id", user.getId(),
+                    "user_id", user.getUserId(),
                     "username", user.getUsername(),
                     "firstName", user.getFirstName() != null ? user.getFirstName() : "",
                     "lastName", user.getLastName() != null ? user.getLastName() : "",
@@ -117,7 +116,7 @@ public class AdminController {
                 "success", true,
                 "message", "Cập nhật người dùng thành công!",
                 "user", Map.of(
-                    "id", savedUser.getId(),
+                    "user_id", savedUser.getUserId(),
                     "username", savedUser.getUsername(),
                     "firstName", savedUser.getFirstName() != null ? savedUser.getFirstName() : "",
                     "lastName", savedUser.getLastName() != null ? savedUser.getLastName() : "",

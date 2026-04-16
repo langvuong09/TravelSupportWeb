@@ -1,7 +1,6 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.LoginRequest;
-import com.example.backend.dto.UpdateUserRequest;
+import com.example.backend.dto.request.LoginRequest;
 import com.example.backend.dto.ChangePasswordRequest;
 import com.example.backend.service.AuthService;
 import java.util.Map;
@@ -28,7 +27,7 @@ public class AuthController {
         return Map.of(
             "success", true,
             "user", Map.of(
-                "id",        user.getId(),
+                "user_id",   user.getUserId(),
                 "username",  user.getUsername(),
                 "firstName", user.getFirstName() != null ? user.getFirstName() : "",
                 "lastName",  user.getLastName()  != null ? user.getLastName()  : "",
@@ -70,7 +69,7 @@ public class AuthController {
         return Map.of(
             "success", true,
             "user", Map.of(
-                "id",       user.getId(),
+                "user_id",   user.getUserId(),
                 "username", user.getUsername(),
                 "image",    user.getImage() != null ? user.getImage() : "",
                 "role",     user.getRole()
@@ -94,7 +93,7 @@ public class AuthController {
             return Map.of(
                 "success", true,
                 "user", Map.of(
-                    "id",        updatedUser.getId(),
+                    "user_id",   updatedUser.getUserId(),
                     "username",  updatedUser.getUsername(),
                     "firstName", updatedUser.getFirstName() != null ? updatedUser.getFirstName() : "",
                     "lastName",  updatedUser.getLastName()  != null ? updatedUser.getLastName()  : "",
@@ -145,7 +144,7 @@ public class AuthController {
             "success", true,
             "message", "Đổi mật khẩu thành công!",
             "user", Map.of(
-                "id", updatedUser.getId(),
+                "user_id", updatedUser.getUserId(),
                 "username", updatedUser.getUsername()
             )
         );
@@ -162,7 +161,7 @@ public class AuthController {
                 "success", true,
                 "message", "Xóa ảnh thành công!",
                 "user", Map.of(
-                    "id", updatedUser.getId(),
+                    "user_id", updatedUser.getUserId(),
                     "username", updatedUser.getUsername(),
                     "firstName", updatedUser.getFirstName() != null ? updatedUser.getFirstName() : "",
                     "lastName", updatedUser.getLastName() != null ? updatedUser.getLastName() : "",
