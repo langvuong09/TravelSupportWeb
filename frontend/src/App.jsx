@@ -13,6 +13,7 @@ import ChatboxAI from "./components/ChatboxAI";
 import Home from "./pages/public/Home";
 import Locations from "./pages/public/Locations";
 import LocationDetail from "./pages/public/LocationDetail";
+import Tours from "./pages/public/Tours";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
 
@@ -136,6 +137,14 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/tours"
+        element={
+          <Layout>
+            <Tours />
+          </Layout>
+        }
+      />
       <Route
         path="/create-tour"
         element={

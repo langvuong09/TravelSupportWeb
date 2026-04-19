@@ -111,11 +111,11 @@ function AdminDashboard() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [locs, provs, foods, users] = await Promise.all([
+        const [locsRes, provs, foods, users] = await Promise.all([
           getLocations(), getProvinces(), getFoods(), getAllUsers()
         ]);
         setStats({
-          locations: locs?.length || 0,
+          locations: locsRes.content?.length || 0,
           provinces: provs?.length || 0,
           foods: foods?.length || 0,
           users: users?.length || 0,
@@ -168,8 +168,8 @@ function AdminLocations() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [locs, provs] = await Promise.all([getLocations(), getProvinces()]);
-        setLocations(locs || []);
+        const [locsRes, provs] = await Promise.all([getLocations(), getProvinces()]);
+        setLocations(locsRes.content || []);
         setProvinces(provs || []);
       } catch (err) {
         console.error('Error loading location data:', err);
@@ -218,8 +218,8 @@ function AdminLocations() {
       } else if (modal === "edit") {
         setToast({ message: "✅ Cập nhật địa điểm thành công", type: "success" });
       }
-      const locs = await getLocations();
-      setLocations(locs || []);
+      const locsRes = await getLocations();
+      setLocations(locsRes.content || []);
       setModal(null);
     } catch (err) {
       console.error('save location error', err);
