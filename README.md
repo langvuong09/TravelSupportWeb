@@ -67,7 +67,7 @@ npm start
 
 Dưới đây là một số ảnh chụp màn hình giao diện chính của ứng dụng.
 
-- ![Trang chủ](docs/screenshots/ui-1.png)
+- ![Trang chủ](docs/screenshots/ui-6.png)
 - ![Địa điểm](docs/screenshots/ui-2.png)
 - ![Tạo tour](docs/screenshots/ui-3.png)
 - ![Danh sách tour](docs/screenshots/ui-4.png)
