@@ -5,7 +5,9 @@ Chào mừng bạn đến với **TravelSupportWeb**, một nền tảng toàn d
 ---
 
 ## 🏗️ Cấu trúc hệ thống
+
 Dự án bao gồm 3 thành phần chính:
+
 1.  **Backend (`/backend`):** Core API xử lý nghiệp vụ, quản lý cơ sở dữ liệu và xác thực người dùng.
 2.  **Frontend (`/frontend`):** Giao diện Web hiện đại dành cho người dùng và quản trị viên.
 3.  **AI Service (`/ai-service`):** Dịch vụ thông minh cung cấp các đề xuất tour dựa trên sở thích và hành vi của người dùng.
@@ -13,6 +15,7 @@ Dự án bao gồm 3 thành phần chính:
 ---
 
 ## 🛠️ Công nghệ sử dụng
+
 - **Backend:** Java 17, Spring Boot 3.x, Spring Data JPA, MySQL.
 - **Frontend:** React, Context API, CSS Vanilla (Rich UI/UX).
 - **AI Service:** Python 3.9+, FastAPI, Scikit-learn (Recommendation Engine).
@@ -23,6 +26,7 @@ Dự án bao gồm 3 thành phần chính:
 ## 🚀 Hướng dẫn bắt đầu nhanh
 
 ### 1. Cơ sở dữ liệu
+
 - Tạo database trong MySQL:
   ```sql
   CREATE DATABASE travelsupport CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -30,6 +34,7 @@ Dự án bao gồm 3 thành phần chính:
 - Nhập dữ liệu mẫu (nếu có) từ thư mục `/Database` hoặc để hệ thống tự tạo bảng thông qua JPA.
 
 ### 2. Khởi chạy AI Service (Cổng 8001)
+
 ```bash
 cd ai-service
 # Cài đặt môi trường ảo và dependencies (Xem chi tiết tại ai-service/README.md)
@@ -40,6 +45,7 @@ python -m app.main
 ```
 
 ### 3. Khởi chạy Backend (Cổng 8080)
+
 ```bash
 cd backend
 # Cấu hình DB trong src/main/resources/application.properties
@@ -47,6 +53,7 @@ mvn clean spring-boot:run
 ```
 
 ### 4. Khởi chạy Frontend (Cổng 3000)
+
 ```bash
 cd frontend
 npm install
@@ -56,6 +63,7 @@ npm start
 ---
 
 ## 📱 Tính năng chính
+
 - **Khám phá:** Xem danh sách địa điểm du lịch, ẩm thực và các tour có sẵn.
 - **Tạo Tour tùy chỉnh:** Người dùng tự chọn tỉnh thành, địa điểm, phương tiện và AI sẽ tính toán chi phí dự kiến.
 - **Đặt Tour:** Quy trình đặt tour tinh gọn, lưu trữ lịch sử và hóa đơn (Booking Invoice).
@@ -65,9 +73,10 @@ npm start
 ---
 
 ## 📝 Tài khoản mặc định
+
 - **Admin:** `admin` / `admin`
 - **User:** `user` / `123456`
 
 ---
 
-*Dự án thuộc Đồ án chuyên ngành - Trường Đại học Sài Gòn.*
+_Dự án thuộc Đồ án chuyên ngành - Trường Đại học Sài Gòn._
