@@ -14,6 +14,8 @@ export default function Locations() {
   const [locations, setLocations] = useState([]);
   const [provinces, setProvinces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     const loadData = async () => {
@@ -26,6 +28,11 @@ export default function Locations() {
     loadData();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, type, province]);
+
   const filtered = locations.filter((loc) => {
     const prov = provinces.find((p) => p.provinceId === loc.provinceId);
     const matchType = type === "Tất cả" || loc.type === type;
@@ -35,6 +42,11 @@ export default function Locations() {
       prov?.name.toLowerCase().includes(search.toLowerCase());
     return matchType && matchProvince && matchSearch;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="page-wrap">
@@ -100,13 +112,65 @@ export default function Locations() {
       ) : filtered.length === 0 ? (
         <EmptyState emoji="🗺️" title="Không tìm thấy địa điểm" desc="Thử thay đổi từ khoá hoặc bộ lọc" />
       ) : (
-        <div className="grid-3 stagger">
-          {filtered.map((loc) => (
-            <div key={loc.locationId} className="anim-fadeUp">
-              <LocationCard location={loc} />
+        <>
+          <div className="grid-3 stagger">
+            {paginatedItems.map((loc) => (
+              <div key={loc.locationId} className="anim-fadeUp">
+                <LocationCard location={loc} />
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 32 }}>
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="btn btn-sm"
+                style={{
+                  background: currentPage === 1 ? "#f0f0f0" : "#fff",
+                  color: currentPage === 1 ? "var(--text-muted)" : "var(--primary)",
+                  border: "1.5px solid var(--border)",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                ← Trước
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className="btn btn-sm"
+                  style={{
+                    minWidth: 40,
+                    background: currentPage === page ? "var(--primary)" : "#fff",
+                    color: currentPage === page ? "#fff" : "var(--primary)",
+                    border: "1.5px solid " + (currentPage === page ? "var(--primary)" : "var(--border)"),
+                    cursor: "pointer",
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="btn btn-sm"
+                style={{
+                  background: currentPage === totalPages ? "#f0f0f0" : "#fff",
+                  color: currentPage === totalPages ? "var(--text-muted)" : "var(--primary)",
+                  border: "1.5px solid var(--border)",
+                  cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                }}
+              >
+                Sau →
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
