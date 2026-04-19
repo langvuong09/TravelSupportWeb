@@ -19,13 +19,13 @@ from sklearn.preprocessing import MinMaxScaler
 import implicit
 
 from .schemas import (
-    CandidateTour,
+    CandidateLocation,
     InteractionEvent,
-    PredictRequest,
-    PredictionItem,
-    PredictResponse,
+    RecommendationRequest,
+    RecommendationItem,
+    RecommendationResponse,
 )
-from .style_config import STYLES
+from .nlp_utils import extract_intents, match_style_weight
 
 
 # ======================
@@ -69,40 +69,16 @@ def _safe_set_overlap(a: List[int], b: List[int]) -> float:
 # ======================
 # FEATURE NORMALIZATION
 # ======================
-def _normalize_candidates(candidates: List[CandidateTour]) -> np.ndarray:
+def _normalize_candidates(candidates: List[CandidateLocation]) -> np.ndarray:
     X = np.array([
         [
             c.estimated_price or 0,
-            c.duration_days or 1,
             c.popularity or 0.45
         ]
         for c in candidates
     ])
 
     return MinMaxScaler().fit_transform(X)
-
-
-# ======================
-# NLP PARSE
-# ======================
-def _parse_query(query: str) -> dict:
-    if not query:
-        return {}
-
-    q = query.lower()
-
-    style_key = next(
-        (s["key"] for s in STYLES if any(a in q for a in s["aliases"])),
-        None
-    )
-
-    target_key = next(
-        (s["key"] for s in STYLES if s["key"] in ("family", "couple", "group", "solo")
-         and any(a in q for a in s["aliases"])),
-        None
-    )
-
-    return {"style": style_key, "target": target_key}
 
 
 # ======================
@@ -115,7 +91,7 @@ def train_cf(events: List[InteractionEvent]) -> None:
         return
 
     users = list({e.user_id for e in events})
-    items = list({e.tour_id for e in events})
+    items = list({str(e.location_id) for e in events if e.location_id is not None})
 
     user_map = {u: i for i, u in enumerate(users)}
     item_map = {t: i for i, t in enumerate(items)}
@@ -123,8 +99,11 @@ def train_cf(events: List[InteractionEvent]) -> None:
     rows, cols, data = [], [], []
 
     for e in events:
+        if e.location_id is None:
+            continue
+        item_id = str(e.location_id)
         rows.append(user_map[e.user_id])
-        cols.append(item_map[e.tour_id])
+        cols.append(item_map[item_id])
         data.append(_event_weight(e))
 
     mat = sp.coo_matrix(
@@ -147,12 +126,12 @@ def train_cf(events: List[InteractionEvent]) -> None:
 # ======================
 # CF SCORE
 # ======================
-def _cf_score(user_id: int, tour_id: str) -> Optional[float]:
-    if cf_model is None:
+def _cf_score(user_id: int, item_id: Optional[str]) -> Optional[float]:
+    if cf_model is None or item_id is None:
         return None
 
     u = cf_model.user_map.get(user_id)
-    i = cf_model.item_map.get(tour_id)
+    i = cf_model.item_map.get(item_id)
 
     if u is None or i is None:
         return None
@@ -168,51 +147,43 @@ def _cf_score(user_id: int, tour_id: str) -> Optional[float]:
     return float(1 / (1 + np.exp(-score)))  # sigmoid
 
 
+def _query_score(c: CandidateLocation, query: str) -> float:
+    if not query:
+        return 0.0
+
+    text = " ".join(
+        filter(None, [c.location_name, c.province_name, " ".join(c.styles)])
+    ).lower()
+    terms = [t.strip() for t in query.lower().split() if t.strip()]
+    if not terms:
+        return 0.0
+
+    hits = sum(1 for term in terms if term in text)
+    return min(0.4, (hits / len(terms)) * 0.4)
+
+
 # ======================
 # CBF SCORE
 # ======================
 def _cbf_score(
-    c: CandidateTour,
+    c: CandidateLocation,
     norm: np.ndarray,
-    req: PredictRequest,
-    parsed: dict
+    req: RecommendationRequest,
 ) -> float:
 
-    price_n, dur_n, pop_n = norm
+    price_n, pop_n = norm
 
     score = 0.0
+    query_intents = extract_intents(req.query)
 
-    # province match
     if req.province_ids:
         score += 0.6 * _safe_set_overlap(req.province_ids, c.province_ids)
 
-    # duration
-    if req.days:
-        score += max(0, 0.25 - abs(c.duration_days - req.days) * 0.06)
+    score += _query_score(c, req.query)
+    score += match_style_weight(c.styles, query_intents)
 
-    # budget
-    if req.budget:
-        if (
-            (req.budget == "low" and c.estimated_price < 2_000_000) or
-            (req.budget == "mid" and 2_000_000 <= c.estimated_price <= 5_000_000) or
-            (req.budget == "high" and c.estimated_price > 5_000_000)
-        ):
-            score += 0.3
-
-    # explicit style
-    if req.style and req.style != "any" and req.style in c.styles:
-        score += 0.3
-
-    # NLP signals
-    if parsed.get("style") and parsed["style"] in c.styles:
-        score += 0.25
-
-    if parsed.get("target") and parsed["target"] in getattr(c, "targets", []):
-        score += 0.2
-
-    # popularity + price preference
-    score += 0.15 * pop_n
-    score += 0.05 * (1 - price_n)
+    score += 0.2 * pop_n
+    score += 0.1 * (1 - price_n)
 
     return min(score, 1.0)
 
@@ -231,7 +202,7 @@ def _hybrid_score(cbf: float, cf: Optional[float]) -> Tuple[float, str, float]:
 # ======================
 # MAIN RECOMMEND
 # ======================
-def recommend(req: PredictRequest) -> PredictResponse:
+def recommend(req: RecommendationRequest) -> RecommendationResponse:
 
     candidates = req.candidates
 
@@ -246,41 +217,43 @@ def recommend(req: PredictRequest) -> PredictResponse:
             if set(req.province_ids) & set(c.province_ids)
         ]
 
-    if not candidates:
-        return PredictResponse(recommendations=[])
+    # drop the current location from recommendation results
+    if req.location_id is not None:
+        candidates = [
+            c for c in candidates
+            if c.location_id != req.location_id
+        ]
 
-    parsed = _parse_query(req.query)
+    if not candidates:
+        return RecommendationResponse(recommendations=[])
+
     norm = _normalize_candidates(candidates)
 
-    results: List[PredictionItem] = []
+    results: List[RecommendationItem] = []
 
     for i, c in enumerate(candidates):
-        cbf = _cbf_score(c, norm[i], req, parsed)
-        cf = _cf_score(req.user_id, c.tour_id)
+        cbf = _cbf_score(c, norm[i], req)
+        item_id = str(c.location_id) if c.location_id is not None else None
+        cf = _cf_score(req.user_id, item_id)
 
-        final, reason, cf_val = _hybrid_score(cbf, cf)
+        final, _, cf_val = _hybrid_score(cbf, cf)
 
         results.append(
-            PredictionItem(
+            RecommendationItem(
                 user_id=req.user_id,
-                tour_id=c.tour_id,
-                tour_name=c.tour_name,
                 location_id=getattr(c, "location_id", None),
                 location_name=c.location_name,
                 province=getattr(c, "province", c.province_name),
                 image=getattr(c, "image", None),
                 price=getattr(c, "price", c.estimated_price),
-                start_date=getattr(c, "start_date", None),
-                end_date=getattr(c, "end_date", None),
                 score=round(final, 4),
                 cf_score=round(cf_val, 4),
                 cbf_score=round(cbf, 4),
-                reason=reason,
             )
         )
 
     results.sort(key=lambda x: x.score, reverse=True)
 
-    return PredictResponse(
+    return RecommendationResponse(
         recommendations=results[:req.top_k]
     )

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 
 from .recommend import recommend
-from .schemas import PredictRequest, PredictResponse
+from .schemas import RecommendationRequest, RecommendationResponse
 
 load_dotenv()
 
@@ -16,13 +16,13 @@ def health() -> dict:
     return {"status": "ok", "service": "ai-service"}
 
 
-@app.post("/predict", response_model=PredictResponse)
-async def predict(request: Request) -> PredictResponse:
+@app.post("/predict", response_model=RecommendationResponse)
+async def predict(request: Request) -> RecommendationResponse:
     raw = await request.body()
     if not raw:
-        payload = PredictRequest()
+        payload = RecommendationRequest()
     else:
-        payload = PredictRequest.model_validate_json(raw)
+        payload = RecommendationRequest.model_validate_json(raw)
     return recommend(payload)
 
 
