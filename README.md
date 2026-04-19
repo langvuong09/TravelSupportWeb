@@ -1,4 +1,4 @@
-# TravelSupportWeb (tạm thời sau sẽ chỉnh sửa)
+# TravelSupportWeb
 
 **Giới thiệu**
 - **Mục đích:** TravelSupportWeb là ứng dụng demo quản lý đăng nhập người dùng cho dự án hỗ trợ du lịch. Gồm `backend` (Spring Boot + JPA + MySQL) và `frontend` (React).
@@ -52,4 +52,25 @@ npm start
 **Ghi chú**
 - Nếu gặp lỗi port đã được dùng, tắt tiến trình đang chiếm cổng hoặc sửa `server.port` trong `backend/src/main/resources/application.properties`.
 - Trong môi trường production, bật lại CSRF và cấu hình bảo mật đúng chuẩn, mã hóa mật khẩu (không lưu plain text).
+
+## Các chức năng chính
+
+- **Đăng nhập / Đăng ký:** Xác thực người dùng, quản lý phiên và phân quyền cơ bản.
+- **Thống kê:** Báo cáo và thống kê cơ bản.
+- **Quản lý địa điểm:** CRUD địa điểm du lịch, hình ảnh và thông tin liên quan.
+- **Quản lý ẩm thực:** Quản lý danh sách địa điểm ăn uống liên quan đến du lịch.
+- **Quản lý tỉnh/thành:** Quản lý danh mục tỉnh/thành, liên kết địa điểm với tỉnh/thành.
+- **Quản lý người dùng:** Quản lý tài khoản, vai trò và hồ sơ người dùng.
+- **Quản lý tour:** Tạo, chỉnh sửa, xóa tour; quản lý lịch trình, chỗ đặt và giá cả.
+
+## Giao diện người dùng
+
+Dưới đây là một số ảnh chụp màn hình giao diện chính của ứng dụng.
+
+- ![Trang chủ](docs/screenshots/ui-1.png)
+- ![Địa điểm](docs/screenshots/ui-2.png)
+- ![Tạo tour](docs/screenshots/ui-3.png)
+- ![Danh sách tour](docs/screenshots/ui-4.png)
+- ![Đặt tour của tôi](docs/screenshots/ui-5.png)
+
 
