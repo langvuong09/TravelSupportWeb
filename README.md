@@ -66,21 +66,18 @@ npm start
 ## Giao diện người dùng
 
 Dưới đây là một số ảnh chụp màn hình giao diện chính của ứng dụng.
-<br>
-**Trang chủ**
-- ![Trang chủ](docs/screenshots/ui-6.png)
-- ![rang chủ](docs/screenshots/ui-2.png)
 
-<br>
-**Địa điểm**
-- ![Địa điểm](docs/screenshots/ui-3.png)
+### Trang chủ
+![Trang chủ](docs/screenshots/ui-6.png)
+![Trang chủ](docs/screenshots/ui-2.png)
 
-<br>
-**Tạo tour**
-- ![Tạo tour](docs/screenshots/ui-4.png)
+### Địa điểm
+![Địa điểm](docs/screenshots/ui-3.png)
 
-<br>
-**Danh sách tour được tạo**
-- ![Danh sách tour](docs/screenshots/ui-5.png)
+### Tạo tour
+![Tạo tour](docs/screenshots/ui-4.png)
+
+### Danh sách tour được tạo
+![Danh sách tour](docs/screenshots/ui-5.png)
 
 
