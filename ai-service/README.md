@@ -35,6 +35,26 @@ Dịch vụ sẽ lắng nghe tại: `http://localhost:8001`
 
 ---
 
+## 🧠 Huấn luyện Model (Training)
+
+Nếu bạn cập nhật dữ liệu huấn luyện hoặc muốn train lại model NLP:
+
+### 1. Huấn luyện NLP Intent
+Script này sẽ xử lý file `data/intent_data.json` và tạo ra model `data/intent_pipeline.pkl`.
+```bash
+python app/nlp_trainer.py
+```
+
+### 2. Chèn dữ liệu mẫu (Massive Mock Data)
+Sử dụng script này để populate database MySQL với dữ liệu người dùng, địa điểm và tương tác thực tế (dành cho Recommendation Engine):
+```bash
+# Đứng tại thư mục gốc của project hoặc dùng đường dẫn tương đối
+python ../Database/insert_data.py 
+```
+*(Lưu ý: Bạn cần chỉnh sửa `host`, `user`, `password` trong file `insert_data.py` để khớp với MySQL của bạn).*
+
+---
+
 ## 🧪 Kiểm tra API
 Bạn có thể kiểm tra tính năng gợi ý bằng `curl`:
 ```bash
