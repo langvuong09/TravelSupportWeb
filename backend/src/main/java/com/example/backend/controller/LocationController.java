@@ -2,6 +2,9 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.Location;
 import com.example.backend.repository.LocationRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,7 +17,22 @@ public class LocationController {
     public LocationController(LocationRepository repo) { this.repo = repo; }
 
     @GetMapping
-    public List<Location> all() { return repo.findAll(); }
+    public Page<Location> all(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) String type,
+        @RequestParam(required = false) Integer provinceId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "9") int size
+    ) {
+        String typeFilter = (type == null || "Tất cả".equals(type)) ? null : type;
+        return repo.search(q, typeFilter, provinceId, PageRequest.of(page, size));
+    }
+
+    @GetMapping("/types")
+    public List<String> getTypes() {
+        return repo.findUniqueTypes();
+    }
+       
     @GetMapping("/{id}")
     public Location get(@PathVariable Integer id) { return repo.findById(id).orElse(null); }
 

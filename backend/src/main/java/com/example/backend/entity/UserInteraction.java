@@ -23,8 +23,9 @@ public class UserInteraction {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
-    private String tourId;
+    @Column(name = "location_id")
+    private Integer locationId;
+
 
     @Column(nullable = false)
     private String eventType;

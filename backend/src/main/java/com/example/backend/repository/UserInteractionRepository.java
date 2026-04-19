@@ -8,7 +8,7 @@ import java.util.List;
 public interface UserInteractionRepository extends JpaRepository<UserInteraction, Long> {
     List<UserInteraction> findByUserId(Long userId);
 
-    List<UserInteraction> findByTourId(String tourId);
+    List<UserInteraction> findByLocationId(Integer locationId);
 
     List<UserInteraction> findByEventType(String eventType);
 }

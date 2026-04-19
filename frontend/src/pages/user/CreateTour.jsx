@@ -8,6 +8,7 @@ import {
   getFoods,
   getTransports,
   formatPrice,
+  createTour,
 } from "../../services/api";
 import {
   parseRecommendationProvinces,
@@ -356,14 +357,14 @@ export default function CreateTour() {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        const [provinces, locations, foods, transports] = await Promise.all([
+        const [provinces, locationsRes, foods, transports] = await Promise.all([
           getProvinces(),
           getLocations(),
           getFoods(),
           getTransports(),
         ]);
         setAllProvinces(provinces);
-        setAllLocations(locations);
+        setAllLocations(locationsRes.content || []);
         setAllFoods(foods);
         setAllTransports(transports);
       } catch (err) {
@@ -564,7 +565,7 @@ export default function CreateTour() {
     });
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (selProvinces.length === 0) return;
 
     const provinces = selProvinces
@@ -573,76 +574,43 @@ export default function CreateTour() {
     const name =
       tourName.trim() || `Tour ${provinces.map((p) => p.name).join(" – ")}`;
 
-    // Tạo tour ID
-    const tourId = `TOUR-${Date.now()}`;
-
-    // Lưu booking vào context với đầy đủ thông tin tour
-    addBooking({
-      userId: user.userId,
-      tourId,
-      tourName: name,
-      numberOfPeople: people,
-      totalPrice: estimate.total,
-      // Chi tiết tour
-      provinces: selProvinces.map((pid) => {
-        const p = allProvinces.find((pr) => pr.provinceId === pid);
-        return { id: pid, name: p?.name, code: p?.code };
-      }),
-      locations: Object.entries(selLocs).reduce((acc, [pid, locIds]) => {
-        return {
-          ...acc,
-          [pid]: locIds.map((lid) => {
-            const loc = allLocations.find((l) => l.locationId === lid);
-            return { id: lid, name: loc?.name, category: loc?.category };
-          }),
-        };
-      }, {}),
-      foods: Object.entries(selFoods).reduce((acc, [pid, foodIds]) => {
-        return {
-          ...acc,
-          [pid]: foodIds.map((fid) => {
-            const food = allFoods.find((f) => f.foodId === fid);
-            return { id: fid, name: food?.name, type: food?.type };
-          }),
-        };
-      }, {}),
-      transports: transportPairs.map(([a, b]) => {
-        const key = `${a}-${b}`;
-        const tId = selTransport[key] || 1;
-        const t = allTransports.find((tr) => tr.transportId === tId);
-        const pA = allProvinces.find((p) => p.provinceId === a);
-        const pB = allProvinces.find((p) => p.provinceId === b);
-
-        // Tạo icon từ tên phương tiện
-        const getTransportIcon = (name) => {
-          if (!name) return "🚗";
-          if (name.includes("khách")) return "🚗";
-          if (name.includes("bay")) return "✈️";
-          if (name.includes("hỏa")) return "🚂";
-          if (name.includes("treo")) return "🚡";
-          if (name.includes("thuyền")) return "⛵";
-          return "🚗";
-        };
-
-        return {
-          from: { id: a, name: pA?.name },
-          to: { id: b, name: pB?.name },
-          transport: {
-            id: tId,
-            name: t?.name,
-            icon: getTransportIcon(t?.name),
-          },
-        };
-      }),
-      estimate,
+    // First create the tour in the backend
+    const newTour = await createTour({
+      tourId: `TOUR-${Date.now()}`,
+      name: name,
+      userId: user.user_id,
+      price: Math.round(estimate.perPerson),
+      days: days,
+      rating: 4.5,
+      popularity: 0.1,
+      createdAt: new Date().toISOString()
     });
 
-    // Show success message rồi reset form
-    setShowSuccess(true);
-    setTimeout(() => {
-      handleReset();
-      setShowSuccess(false);
-    }, 1500);
+    if (!newTour) {
+      alert("Lỗi: Không thể khởi tạo tour trên hệ thống.");
+      return;
+    }
+
+    // Then create the booking
+    const bookingResult = await addBooking({
+      userId: user.user_id,
+      tourId: newTour.tourId,
+      numberOfPeople: people,
+      fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username,
+      email: user.email || "",
+      phone: user.phone || ""
+    });
+
+    if (bookingResult) {
+      // Show success message rồi reset form
+      setShowSuccess(true);
+      setTimeout(() => {
+        handleReset();
+        setShowSuccess(false);
+      }, 1500);
+    } else {
+      alert("Tour đã được tạo nhưng gặp lỗi khi đặt. Vui lòng thử lại trong Lịch sử.");
+    }
   };
 
   const handleReset = () => {

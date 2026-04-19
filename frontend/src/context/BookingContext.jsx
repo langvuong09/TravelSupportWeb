@@ -1,49 +1,42 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { createBooking, getMyBookings, updateBookingStatus } from "../services/api";
 
 const BookingContext = createContext(null);
 
 export function BookingProvider({ children }) {
-  const [bookings, setBookings] = useState(() => {
-    try {
-      const saved = localStorage.getItem("ts_bookings");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchBookings = async (userId) => {
+    if (!userId) return;
+    setLoading(true);
+    const data = await getMyBookings(userId);
+    setBookings(data);
+    setLoading(false);
+  };
+
+  const addBooking = async (bookingData) => {
+    const newBooking = await createBooking(bookingData);
+    if (newBooking) {
+      setBookings((prev) => [newBooking, ...prev]);
+      return newBooking;
     }
-  });
-
-  // Lưu vào localStorage mỗi khi bookings thay đổi
-  useEffect(() => {
-    localStorage.setItem("ts_bookings", JSON.stringify(bookings));
-  }, [bookings]);
-
-  const addBooking = (booking) => {
-    const newBooking = {
-      id: `b-${Date.now()}`,
-      bookingDate: new Date().toISOString().split("T")[0],
-      status: "confirmed", // ← Trực tiếp confirmed, không cần duyệt
-      ...booking,
-    };
-    setBookings((prev) => [...prev, newBooking]);
-    return newBooking;
+    return null;
   };
 
-  const getBookingsByUser = (userId) => {
-    return bookings.filter((b) => b.userId === userId);
-  };
-
-  const updateBooking = (bookingId, updates) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === bookingId ? { ...b, ...updates } : b))
-    );
-  };
-
-  const deleteBooking = (bookingId) => {
-    setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+  const updateStatus = async (bookingId, status) => {
+    const updated = await updateBookingStatus(bookingId, status);
+    if (updated) {
+      setBookings((prev) =>
+        prev.map((b) => (b.bookingId === bookingId ? updated : b))
+      );
+      return updated;
+    }
+    return null;
   };
 
   return (
-    <BookingContext.Provider value={{ bookings, addBooking, getBookingsByUser, updateBooking, deleteBooking }}>
+    <BookingContext.Provider value={{ bookings, loading, fetchBookings, addBooking, updateStatus }}>
       {children}
     </BookingContext.Provider>
   );

@@ -1,0 +1,66 @@
+[
+  { "text": "Gợi ý du lịch cho cặp đôi", "intent": "romantic" },
+  { "text": "Hẹn hò lãng mạn ở Sài Gòn", "intent": "romantic" },
+  { "text": "Quán cà phê view đẹp cho cặp đôi ở TPHCM", "intent": "romantic" },
+  { "text": "Nhà hàng lãng mạn ở quận 1", "intent": "romantic" },
+
+  { "text": "Đi biển ở Phú Quốc", "intent": "beach" },
+  { "text": "Nghỉ dưỡng resort gần biển", "intent": "beach" },
+  { "text": "Bãi biển gần Sài Gòn cuối tuần", "intent": "beach" },
+  { "text": "Đi Vũng Tàu một ngày từ TPHCM", "intent": "beach" },
+
+  { "text": "Mua sắm ở chợ Bến Thành", "intent": "shopping" },
+  { "text": "Địa điểm shopping Sài Gòn", "intent": "shopping" },
+  { "text": "Trung tâm thương mại lớn ở TPHCM", "intent": "shopping" },
+  { "text": "Chợ đêm Sài Gòn mua đồ lưu niệm", "intent": "shopping" },
+  { "text": "Mua quần áo giá rẻ ở Sài Gòn", "intent": "shopping" },
+
+  { "text": "Tham quan di tích lịch sử", "intent": "culture" },
+  { "text": "Bảo tàng và di tích ở Hà Nội", "intent": "culture" },
+  { "text": "Bảo tàng Chứng tích Chiến tranh TPHCM", "intent": "culture" },
+  { "text": "Tham quan Dinh Độc Lập Sài Gòn", "intent": "culture" },
+  { "text": "Nhà thờ Đức Bà và Bưu điện Trung tâm", "intent": "culture" },
+  { "text": "Phố đi bộ Nguyễn Huệ về đêm", "intent": "culture" },
+
+  { "text": "Công viên sinh thái gần thành phố", "intent": "nature" },
+  { "text": "Du lịch tự nhiên và hồ nước", "intent": "nature" },
+  { "text": "Khu dự trữ sinh quyển Cần Giờ từ TPHCM", "intent": "nature" },
+  { "text": "Rừng ngập mặn gần Sài Gòn", "intent": "nature" },
+
+  { "text": "Du lịch gia đình với trẻ em", "intent": "family" },
+  { "text": "Bạn trẻ đi chơi nhóm bạn", "intent": "family" },
+  { "text": "Công viên vui chơi cho trẻ em ở TPHCM", "intent": "family" },
+  { "text": "Đầm Sen hay Suối Tiên phù hợp cho gia đình", "intent": "family" },
+  { "text": "Sở thú Sài Gòn đưa con nhỏ đi chơi", "intent": "family" },
+
+  { "text": "Phượt miền núi", "intent": "adventure" },
+  { "text": "Chuyến đi mạo hiểm và khám phá", "intent": "adventure" },
+  { "text": "Chèo kayak ở Cần Giờ", "intent": "adventure" },
+  { "text": "Leo núi Bà Đen từ TPHCM", "intent": "adventure" },
+
+  { "text": "Quán ăn ngon nổi tiếng ở TPHCM", "intent": "food" },
+  { "text": "Ăn gì ở Sài Gòn buổi tối", "intent": "food" },
+  { "text": "Hủ tiếu Nam Vang ngon ở quận mấy", "intent": "food" },
+  { "text": "Quán nhậu vỉa hè Sài Gòn", "intent": "food" },
+  { "text": "Phố ẩm thực ở TPHCM", "intent": "food" },
+
+  { "text": "Cà phê view sân thượng ở Sài Gòn", "intent": "cafe" },
+  { "text": "Quán cà phê yên tĩnh để làm việc TPHCM", "intent": "cafe" },
+  { "text": "Cà phê cóc vỉa hè Sài Gòn", "intent": "cafe" },
+  { "text": "Rooftop bar nhìn ra thành phố", "intent": "cafe" },
+
+  { "text": "Khách sạn rẻ gần trung tâm Sài Gòn", "intent": "accommodation" },
+  { "text": "Hostel cho khách ba lô ở TPHCM", "intent": "accommodation" },
+  { "text": "Khách sạn 5 sao quận 1 Sài Gòn", "intent": "accommodation" },
+  { "text": "Thuê căn hộ ngắn ngày ở TPHCM", "intent": "accommodation" },
+
+  { "text": "Đi Sài Gòn bằng xe buýt như thế nào", "intent": "transport" },
+  { "text": "Thuê xe máy ở TPHCM", "intent": "transport" },
+  { "text": "Grab hay taxi ở Sài Gòn cái nào rẻ hơn", "intent": "transport" },
+  { "text": "Metro TPHCM đi được những đâu", "intent": "transport" },
+
+  { "text": "Nightlife ở Sài Gòn về đêm", "intent": "nightlife" },
+  { "text": "Bar và club nổi tiếng ở quận 1 TPHCM", "intent": "nightlife" },
+  { "text": "Phố Bùi Viện vui chơi ban đêm", "intent": "nightlife" },
+  { "text": "Xem biểu diễn âm nhạc sống ở Sài Gòn", "intent": "nightlife" }
+]

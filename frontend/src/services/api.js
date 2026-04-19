@@ -1,13 +1,30 @@
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // ==================== LOCATIONS ====================
-export const getLocations = async () => {
+export const getLocations = async (params = {}) => {
   try {
-    const res = await fetch(`${API_BASE}/api/locations`);
+    const { page = 0, size = 9, q, type, provinceId } = params;
+    const query = new URLSearchParams({ page, size });
+    if (q) query.append("q", q);
+    if (type && type !== "Tất cả") query.append("type", type);
+    if (provinceId) query.append("provinceId", provinceId);
+
+    const res = await fetch(`${API_BASE}/api/locations?${query.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch locations");
     return await res.json();
   } catch (err) {
     console.error("Error fetching locations:", err);
+    return { content: [], totalPages: 0, totalElements: 0 };
+  }
+};
+
+export const getLocationTypes = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/locations/types`);
+    if (!res.ok) throw new Error("Failed to fetch location types");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching location types:", err);
     return [];
   }
 };
@@ -89,6 +106,21 @@ export const getTourFullDetails = async (id) => {
     return await res.json();
   } catch (err) {
     console.error("Error fetching tour details:", err);
+    return null;
+  }
+};
+
+export const createTour = async (tourData) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/tours`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tourData),
+    });
+    if (!res.ok) throw new Error("Failed to create tour");
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating tour:", err);
     return null;
   }
 };
@@ -320,6 +352,48 @@ export const createTransport = async (transportData) => {
   } catch (err) {
     console.error("Error creating transport:", err);
     return { success: false, message: err.message };
+  }
+};
+
+// ==================== BOOKINGS ====================
+export const createBooking = async (bookingData) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/bookings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bookingData),
+    });
+    if (!res.ok) throw new Error("Failed to create booking");
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating booking:", err);
+    return null;
+  }
+};
+
+export const getMyBookings = async (userId) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/bookings/my-bookings/${userId}`);
+    if (!res.ok) throw new Error("Failed to fetch bookings");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    return [];
+  }
+};
+
+export const updateBookingStatus = async (bookingId, status) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) throw new Error("Failed to update booking status");
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating booking status:", err);
+    return null;
   }
 };
 

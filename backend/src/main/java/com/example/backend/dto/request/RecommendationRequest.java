@@ -10,10 +10,7 @@ import java.util.List;
 public class RecommendationRequest {
     private Long userId;
     private String query;
-    private String budget;
-    private Integer days;
-    private String style;
-    private Integer participants;
+    private Integer locationId;
     private List<Integer> provinceIds;
     private Integer topK;
 }

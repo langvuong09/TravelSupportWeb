@@ -23,8 +23,8 @@ export default function Home() {
   useEffect(() => {
     const loadLocations = async () => {
       setIsLoading(true);
-      const data = await getLocations();
-      setLocations(data);
+      const res = await getLocations({ size: 6 }); // Only need 6 for featured
+      setLocations(res.content || []);
       setIsLoading(false);
     };
     loadLocations();
@@ -39,7 +39,7 @@ export default function Home() {
     if (search.trim()) nav(`/locations?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const featuredLocations = locations.slice(0, 6);
+  const featuredLocations = Array.isArray(locations) ? locations : [];
 
   return (
     <div className="home">

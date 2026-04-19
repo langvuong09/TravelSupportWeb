@@ -12,11 +12,19 @@ import java.time.Instant;
 @AllArgsConstructor
 public class Tour {
     @Id
-    private String tourId; // string primary key as in schema
+    private String tourId;
 
-    private Integer userId;
+    private Long userId;
 
     private String name;
+
+    private Integer price;
+
+    private Integer days;
+
+    private Float rating;
+
+    private Float popularity;
 
     private Instant createdAt;
 }

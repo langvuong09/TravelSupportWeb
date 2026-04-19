@@ -9,13 +9,15 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:8080";
 const PUBLIC_NAV = [
   { path: "/",          label: "Trang chủ", icon: <Ic.Home /> },
   { path: "/locations", label: "Địa điểm",  icon: <Ic.Map /> },
+  { path: "/tours",     label: "Tour",      icon: <Ic.Tour /> },
 ];
 
 const USER_NAV = [
   { path: "/",             label: "Trang chủ",  icon: <Ic.Home /> },
   { path: "/locations",    label: "Địa điểm",   icon: <Ic.Map /> },
+  { path: "/tours",        label: "Tour",       icon: <Ic.Tour /> },
   { path: "/create-tour",  label: "Tạo tour",   icon: <Ic.Plus /> },
-  { path: "/my-bookings",  label: "Tours list",   icon: <Ic.Bookmark /> },
+  { path: "/my-bookings",  label: "Lịch sử đặt tour",   icon: <Ic.Bookmark /> },
 ];
 
 export default function Navbar() {
