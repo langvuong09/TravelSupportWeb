@@ -27,7 +27,7 @@ export default function MyBookings() {
   if (!user) return <div className="page-wrap">Vui lòng đăng nhập để xem hành trình.</div>;
 
   return (
-    <div className="page-wrap">
+    <div className="page-wrap" style={{ minHeight: "70vh" }}>
       <div style={{ marginBottom: 32 }}>
         <h1 className="page-title" style={{ marginBottom: 8 }}>Hành trình của tôi</h1>
         <p className="page-subtitle" style={{ color: "var(--text-muted)" }}>
@@ -88,6 +88,10 @@ export default function MyBookings() {
                 <img 
                   src={tour.image || "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=200&q=80"} 
                   alt={tour.name}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=200&q=80";
+                  }}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>

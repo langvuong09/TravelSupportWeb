@@ -3,6 +3,8 @@ import { Ic } from "./UI";
 import { formatPrice, logInteraction } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80";
+
 export default function LocationCard({ location }) {
   const { user } = useAuth();
   return (
@@ -19,8 +21,12 @@ export default function LocationCard({ location }) {
       {/* Image */}
       <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
         <img
-          src={location.image}
+          src={location.image || DEFAULT_IMAGE}
           alt={location.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = DEFAULT_IMAGE;
+          }}
           style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s ease" }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
           onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}

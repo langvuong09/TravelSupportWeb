@@ -69,6 +69,18 @@ curl -X POST http://localhost:8001/train-nlp
 
 ---
 
+## 🗄️ Dữ liệu mẫu (Mock Data)
+
+Trước khi sử dụng hệ thống gợi ý, bạn cần đảm bảo Database đã có dữ liệu về địa điểm và tương tác. Sử dụng script sau để tự động chèn dữ liệu mẫu:
+
+```bash
+# Đứng tại thư mục ai-service chạy lệnh sau:
+python ../Database/insert_data.py
+```
+*(Lưu ý: Bạn cần cấu hình đúng thông tin kết nối MySQL trong file `insert_data.py` trước khi chạy).*
+
+---
+
 ## 🧪 Đánh giá mô hình (Evaluator)
 Để kiểm tra độ chính xác (Hit Rate, MRR) của mô hình trên dữ liệu thực tế:
 ```bash

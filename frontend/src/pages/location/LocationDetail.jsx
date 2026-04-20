@@ -10,6 +10,8 @@ import {
 } from "../../services/api";
 import { Ic, StarRating, EmptyState } from "../../components/UI";
 
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80";
+
 export default function LocationDetail() {
   const { id } = useParams();
   const [location, setLocation] = useState(null);
@@ -85,8 +87,12 @@ export default function LocationDetail() {
         }}
       >
         <img
-          src={loc.image}
+          src={loc.image || DEFAULT_IMAGE}
           alt={loc.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = DEFAULT_IMAGE;
+          }}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
         <div
