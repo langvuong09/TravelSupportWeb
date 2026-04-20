@@ -11,7 +11,7 @@ public class RecommendationItemResponse {
     private String locationName;
     private String province;
     private String image;
-    private Integer price;
+    private Integer estimatedPrice;
 
     // AI
     private double cfScore;

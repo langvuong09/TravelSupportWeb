@@ -177,12 +177,14 @@ export default function ChatboxAI() {
                             <span>
                               {r.province
                                 ? `${r.province}`
-                                : "Không xác định tỉnh"}
+                                : ""}
                             </span>
-                            {r.price ? (
+                            {r.estimatedPrice ? (
                               <span>
                                 Giá tham khảo:{" "}
-                                {new Intl.NumberFormat("vi-VN").format(r.price)}{" "}
+                                {new Intl.NumberFormat("vi-VN").format(
+                                  r.estimatedPrice
+                                )}{" "}
                                 đ
                               </span>
                             ) : null}

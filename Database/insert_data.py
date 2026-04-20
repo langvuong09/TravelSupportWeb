@@ -8,7 +8,7 @@ fake = Faker('vi_VN')
 # ==========================================
 # CONFIG
 # ==========================================
-NUM_USERS = 100
+NUM_USERS = 500
 
 EVENT_TYPES = ["view", "click", "booking"]
 EVENT_WEIGHTS = [0.6, 0.3, 0.1]  # realistic hơn
@@ -41,6 +41,8 @@ cursor.execute("TRUNCATE user_interactions")
 cursor.execute("TRUNCATE locations")
 cursor.execute("TRUNCATE users")
 cursor.execute("TRUNCATE provinces")
+cursor.execute("TRUNCATE foods")
+cursor.execute("TRUNCATE transport_types")
 cursor.execute("SET FOREIGN_KEY_CHECKS=1")
 
 # ==========================================
@@ -50,6 +52,20 @@ cursor.execute("""
 INSERT INTO provinces (province_id, name, latitude, longitude)
 VALUES (%s, %s, %s, %s)
 """, (21, "TP. Hồ Chí Minh", 10.7769, 106.7009))
+
+# ==========================================
+# TRANSPORT TYPES
+# ==========================================
+transport_types = [
+    ("Xe máy", 2000.0),
+    ("Xe ô tô", 15000.0),
+    ("Xe khách", 5000.0)
+]
+
+cursor.executemany("""
+INSERT INTO transport_types (name, cost_per_km)
+VALUES (%s, %s)
+""", transport_types)
 
 # ==========================================
 # USERS
@@ -147,6 +163,8 @@ HCM_LOCATIONS = [
 ("Chợ Nhật Tảo","Chợ","Chợ bán đồ si","https://images.unsplash.com/photo-1576228459705-2a0c4cdb3c66")
 ]
 
+SEASONS = ["Mùa xuân", "Mùa hạ", "Mùa thu", "Mùa đông"]
+
 locations = []
 for name, loc_type, desc, image in HCM_LOCATIONS:
     locations.append((
@@ -154,7 +172,7 @@ for name, loc_type, desc, image in HCM_LOCATIONS:
         desc,
         random.randint(2, 15) * 50000,
         image,
-        "Quanh năm",
+        random.choice(SEASONS),
         21,
         loc_type
     ))
@@ -165,13 +183,32 @@ VALUES (%s,%s,%s,%s,%s,%s,%s)
 """, locations)
 
 # ==========================================
+# FOODS
+# ==========================================
+HCM_FOODS = [
+    ("Cơm Tấm Sài Gòn", "Món ăn sáng đặc trưng với sườn nướng, bì chả", 55000, "https://images.unsplash.com/photo-1598511757337-ea2cafc31752", 21, "Đặc sản"),
+    ("Bánh Mì Huỳnh Hoa", "Bánh mì nổi tiếng nhất Sài Gòn với nhiều loại bơ, patê", 60000, "https://images.unsplash.com/photo-1509456592764-f254bc21f539", 21, "Đường phố"),
+    ("Phở Hòa Pasteur", "Phở bò truyền thống lâu đời", 85000, "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43", 21, "Truyền thống"),
+    ("Bún Mắm Miền Tây", "Bún mắm đậm đà với tôm, mực, cá", 70000, "https://images.unsplash.com/photo-1512058560366-cd242dfe5cb3", 21, "Đặc sản"),
+    ("Hủ Tiếu Nam Vang", "Hủ tiếu với tôm, trứng cút, thịt băm", 65000, "https://images.unsplash.com/photo-1547928576-a4a33237ecd0", 21, "Đặc sản"),
+    ("Ốc Đào", "Thiên đường các món ốc", 150000, "https://images.unsplash.com/photo-1553621042-f6e147245754", 21, "Nhậu"),
+    ("Bánh Xèo Ăn Là Ghiền", "Bánh xèo miền Tây giòn rụm", 120000, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd", 21, "Truyền thống"),
+    ("Chè Thái Ý Phương", "Món chè sầu riêng nổi tiếng phố Nguyễn Tri Phương", 35000, "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e", 21, "Tráng miệng")
+]
+
+cursor.executemany("""
+INSERT INTO foods (name, description, estimated_price, image, province_id, type)
+VALUES (%s, %s, %s, %s, %s, %s)
+""", HCM_FOODS)
+
+# ==========================================
 # LOCATION MAP
 # ==========================================
 cursor.execute("SELECT location_id, type FROM locations")
 location_map = {row[0]: row[1] for row in cursor.fetchall()}
 
 # ==========================================
-# USER INTERACTIONS (TỐI ƯU CHO AI)
+# USER INTERACTIONS
 # ==========================================
 interactions = []
 seen = set()
@@ -179,26 +216,29 @@ seen = set()
 for user_id, profile in user_profiles.items():
     for loc_id, loc_type in location_map.items():
 
-        # base probability thấp -> realistic
-        prob = 0.02
+        # Tăng mạnh probability để đạt > 10,000 rows
+        prob = 0.15
 
-        # nếu đúng sở thích -> tăng vừa phải
+        # nếu đúng sở thích -> tăng xác suất rất cao
         if profile["style"] == loc_type:
-            prob += 0.25
+            prob += 0.55
 
         if random.random() < prob:
-            event = random.choices(EVENT_TYPES, weights=EVENT_WEIGHTS)[0]
+            # Tạo ngẫu nhiên từ 1-3 event cho mỗi location để tăng số lượng data
+            num_events = random.randint(1, 3)
+            selected_events = random.sample(EVENT_TYPES, num_events)
 
-            key = (user_id, loc_id, event)
-            if key in seen:
-                continue
-            seen.add(key)
+            for event in selected_events:
+                key = (user_id, loc_id, event)
+                if key in seen:
+                    continue
+                seen.add(key)
 
-            val = EVENT_SCORE[event]
+                val = EVENT_SCORE[event]
 
-            created_at = datetime.now() - timedelta(days=random.randint(0, 30))
+                created_at = datetime.now() - timedelta(days=random.randint(0, 30))
 
-            interactions.append((user_id, loc_id, event, val, created_at))
+                interactions.append((user_id, loc_id, event, val, created_at))
 
 cursor.executemany("""
 INSERT INTO user_interactions (user_id,location_id,event_type,value,created_at)

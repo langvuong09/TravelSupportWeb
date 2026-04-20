@@ -6,21 +6,19 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { BookingProvider } from "./context/BookingContext";
 import Navbar from "./components/Navbar";
 import ChatboxAI from "./components/ChatboxAI";
 
-import Home from "./pages/public/Home";
-import Locations from "./pages/public/Locations";
-import LocationDetail from "./pages/public/LocationDetail";
-import Tours from "./pages/public/Tours";
-import Login from "./pages/public/Login";
-import Register from "./pages/public/Register";
+import Home from "./pages/home/Home";
+import Locations from "./pages/location/Locations";
+import LocationDetail from "./pages/location/LocationDetail";
+import MyBookings from "./pages/tour/MyBookings";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 
-import BookingForm from "./pages/user/BookingForm";
-import MyBookings from "./pages/user/MyBookings";
-import Profile from "./pages/user/Profile";
-import CreateTour from "./pages/user/CreateTour";
+import Profile from "./pages/profile/Profile";
+import CreateTour from "./pages/tour/CreateTour";
+import TourDetail from "./pages/tour/TourDetail";
 
 import AdminPages from "./pages/admin/AdminPages";
 
@@ -138,10 +136,22 @@ function AppRoutes() {
       />
 
       <Route
-        path="/tours"
+        path="/my-bookings"
         element={
           <Layout>
-            <Tours />
+            <RequireUser>
+              <MyBookings />
+            </RequireUser>
+          </Layout>
+        }
+      />
+      <Route
+        path="/tours/:tourId"
+        element={
+          <Layout>
+            <RequireUser>
+              <TourDetail />
+            </RequireUser>
           </Layout>
         }
       />
@@ -151,26 +161,6 @@ function AppRoutes() {
           <Layout>
             <RequireUser>
               <CreateTour />
-            </RequireUser>
-          </Layout>
-        }
-      />
-      <Route
-        path="/book/:tourId"
-        element={
-          <Layout>
-            <RequireUser>
-              <BookingForm />
-            </RequireUser>
-          </Layout>
-        }
-      />
-      <Route
-        path="/my-bookings"
-        element={
-          <Layout>
-            <RequireUser>
-              <MyBookings />
             </RequireUser>
           </Layout>
         }
@@ -206,9 +196,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <BookingProvider>
-          <AppRoutes />
-        </BookingProvider>
+        <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   );

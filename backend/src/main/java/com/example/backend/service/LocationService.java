@@ -16,16 +16,13 @@ import com.example.backend.entity.Location;
 import com.example.backend.entity.Province;
 import com.example.backend.repository.LocationRepository;
 import com.example.backend.repository.ProvinceRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class LocationService {
     private final LocationRepository locationRepository;
     private final ProvinceRepository provinceRepository;
-
-    public LocationService(LocationRepository locationRepository, ProvinceRepository provinceRepository) {
-        this.locationRepository = locationRepository;
-        this.provinceRepository = provinceRepository;
-    }
 
     public List<Map<String, Object>> getLocationCandidates(RecommendationRequest request) {
         List<Location> locations = locationRepository.findAll();
@@ -81,9 +78,9 @@ public class LocationService {
         candidate.put("location_id", location.getLocationId());
         candidate.put("location_name", location.getName());
         candidate.put("province_ids", provinceIds);
-        candidate.put("province", provinceName);
+        candidate.put("province_name", provinceName);
         candidate.put("image", location.getImage());
-        candidate.put("price", estimatedPrice);
+        candidate.put("estimated_price", estimatedPrice);
         candidate.put("styles", new ArrayList<>(styles));
         candidate.put("popularity", popularity);
         return candidate;

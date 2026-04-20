@@ -110,6 +110,17 @@ export const getTourFullDetails = async (id) => {
   }
 };
 
+export const getMyTours = async (userId) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/tours/my-tours/${userId}`);
+    if (!res.ok) throw new Error("Failed to fetch my tours");
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching my tours:", err);
+    return [];
+  }
+};
+
 export const createTour = async (tourData) => {
   try {
     const res = await fetch(`${API_BASE}/api/tours`, {

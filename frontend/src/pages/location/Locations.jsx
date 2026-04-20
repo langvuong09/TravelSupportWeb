@@ -72,11 +72,6 @@ export default function Locations() {
     return pages;
   };
 
-  // Pagination logic
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
-
   return (
     <div className="page-wrap">
       {/* Header */}

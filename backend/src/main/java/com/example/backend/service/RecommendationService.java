@@ -107,9 +107,9 @@ public class RecommendationService {
                 item.setUserId(parseLong(rec.get("user_id"), request.getUserId()));
                 item.setLocationId(parseInteger(rec.get("location_id")));
                 item.setLocationName(Objects.toString(rec.get("location_name"), null));
-                item.setProvince(Objects.toString(rec.get("province"), null));
+                item.setProvince(Objects.toString(rec.get("province_name"), null));
                 item.setImage(Objects.toString(rec.get("image"), null));
-                item.setPrice(parseInteger(rec.get("price")));
+                item.setEstimatedPrice(parseInteger(rec.get("estimated_price")));
                 item.setHybridScore(parseDouble(rec.get("score")));
                 item.setCfScore(parseDouble(rec.get("cf_score")));
                 item.setCbfScore(parseDouble(rec.get("cbf_score")));
@@ -117,9 +117,9 @@ public class RecommendationService {
                 if ((item.getLocationName() == null || item.getLocationName().isBlank()) && item.getLocationId() != null && candidateMap.containsKey(item.getLocationId().toString())) {
                     Map<String, Object> candidate = candidateMap.get(item.getLocationId().toString());
                     item.setLocationName(Objects.toString(candidate.get("location_name"), null));
-                    item.setProvince(Objects.toString(candidate.get("province"), null));
+                    item.setProvince(Objects.toString(candidate.get("province_name"), null));
                     item.setImage(Objects.toString(candidate.get("image"), null));
-                    item.setPrice(parseInteger(candidate.get("price")));
+                    item.setEstimatedPrice(parseInteger(candidate.get("estimated_price")));
                     item.setLocationId(parseInteger(candidate.get("location_id")));
                 }
                 if (item.getUserId() == null) {

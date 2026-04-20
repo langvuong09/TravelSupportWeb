@@ -140,3 +140,20 @@ export function findLocationByName(locationName, locations) {
     null
   );
 }
+
+// ── Khoảng cách ước lượng giữa các tỉnh (km) ─────────────────
+export const PROVINCE_DISTANCES = {
+  "1-2": 350, "1-3": 1200, "1-4": 1400, "1-5": 800,
+  "1-6": 450, "1-7": 600, "1-8": 1100, "1-9": 900,
+  "1-10": 950, "1-11": 300, "21-34": 1700, // HCM-HN
+};
+
+export function getDist(locA, locB, provA, provB) {
+  if (provA === provB) {
+    if (locA === locB) return 0;
+    // Giả lập khoảng cách nội thành dựa trên ID để trông thật hơn (3km - 10km)
+    return 3 + (Math.abs(locA - locB) % 8);
+  }
+  const key = [Math.min(provA, provB), Math.max(provA, provB)].join("-");
+  return PROVINCE_DISTANCES[key] || 50;
+}

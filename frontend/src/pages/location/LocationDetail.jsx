@@ -312,9 +312,10 @@ export default function LocationDetail() {
                           color: "var(--primary)",
                         }}
                       >
-                        {rec.price
-                          ? new Intl.NumberFormat("vi-VN").format(rec.price) +
-                            " đ"
+                        {rec.estimatedPrice
+                          ? new Intl.NumberFormat("vi-VN").format(
+                              rec.estimatedPrice
+                            ) + " đ"
                           : "Miễn phí"}
                       </div>
                     </div>

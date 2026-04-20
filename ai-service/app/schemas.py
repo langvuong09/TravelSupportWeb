@@ -11,7 +11,6 @@ class CandidateLocation(BaseModel):
     province: str = ""
     image: Optional[str] = None
     estimated_price: int = 0
-    price: int = 0
     styles: List[str] = Field(default_factory=list)
     popularity: float = 0.45
 
@@ -38,9 +37,9 @@ class RecommendationItem(BaseModel):
     user_id: Optional[int] = None
     location_id: Optional[int] = None
     location_name: str = ""
-    province: str = ""
+    province_name: str = ""
     image: Optional[str] = None
-    price: int = 0
+    estimated_price: int = 0
     score: float
     cf_score: float = 0.0
     cbf_score: float = 0.0

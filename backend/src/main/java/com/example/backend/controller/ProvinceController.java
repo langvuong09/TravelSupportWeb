@@ -6,12 +6,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/provinces")
+@RequiredArgsConstructor
 public class ProvinceController {
     private final ProvinceRepository repo;
-
-    public ProvinceController(ProvinceRepository repo) { this.repo = repo; }
 
     @GetMapping
     public List<Province> all() { return repo.findAll(); }

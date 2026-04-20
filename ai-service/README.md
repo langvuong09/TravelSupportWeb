@@ -55,6 +55,9 @@ python ../Database/insert_data.py
 
 ---
 
+## Kiểm tra system recommend
+python -m app.evaluator
+
 ## 🧪 Kiểm tra API
 Bạn có thể kiểm tra tính năng gợi ý bằng `curl`:
 ```bash
