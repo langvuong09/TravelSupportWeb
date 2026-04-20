@@ -40,12 +40,28 @@ mvn clean spring-boot:run
 
 ## 📡 Các API chính
 - **Xác thực:** `/api/auth/login`, `/api/auth/register`
-- **Địa điểm:** `/api/locations`, `/api/provinces`
-- **Tour:** `/api/tours` (Lấy danh sách, tạo tour mới)
-- **Đặt tour (Booking):**
-    - `POST /api/bookings`: Đặt tour.
-    - `GET /api/bookings/my-bookings/{userId}`: Lịch sử đặt tour.
-- **Gợi ý:** `/api/recommendations` (Kết nối với AI Service).
+- **Địa điểm & Tỉnh thành:** `/api/locations`, `/api/provinces`
+- **Quản lý Tour:** `/api/tours` (Lấy danh sách, tạo tour cá nhân)
+- **Gợi ý thông minh (AI):** `/api/recommendations` (Kết nối và xếp hạng dựa trên AI Service).
+- **Quản trị AI (Admin):** `POST /api/admin/train-ai` (Kích hoạt huấn luyện lại mô hình ALS).
+- **Ghi nhận hành vi:** `POST /api/interactions/log` (Ghi lại view, click, booking).
+
+---
+
+## 🤖 Tính năng AI & Tự động hóa
+
+### 1. Theo dõi hành vi (Behavior Tracking)
+Hệ thống tự động ghi lại các tương tác của người dùng để làm đầu vào cho mô hình Collaborative Filtering:
+- **View**: Ghi lại khi xem chi tiết địa điểm (sau 5 giây).
+- **Click**: Ghi lại khi nhấn vào các gợi ý hoặc thẻ địa điểm.
+- **Booking**: Ghi lại khi người dùng lưu địa điểm vào hành trình.
+
+### 2. Lập lịch tự động (Cron Job)
+Dự án tích hợp **Spring Scheduling** để tự động cập nhật mô hình AI mà không cần quản trị viên can thiệp:
+- **Vị trí**: `com.example.backend.scheduler.AIScheduler`
+- **Lịch trình**: Mặc định chạy mỗi ngày vào lúc 2:00 AM (Có thể cấu hình lại bằng Cron Expression).
+
+---
 
 ---
 

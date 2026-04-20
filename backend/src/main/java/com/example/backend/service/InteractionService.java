@@ -35,6 +35,18 @@ public class InteractionService {
         return events;
     }
 
+    public List<Map<String, Object>> getAllInteractions() {
+        List<UserInteraction> allData = repo.findAll();
+        List<Map<String, Object>> events = new ArrayList<>();
+        for (UserInteraction interaction : allData) {
+            if (interaction == null || interaction.getUserId() == null) {
+                continue;
+            }
+            events.add(toEvent(interaction));
+        }
+        return events;
+    }
+
     public List<String> getHistoryLocationIds(Long userId) {
         if (userId == null) {
             return List.of();

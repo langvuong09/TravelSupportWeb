@@ -35,50 +35,51 @@ Dịch vụ sẽ lắng nghe tại: `http://localhost:8001`
 
 ---
 
+## 🧠 Kiến trúc Gợi ý (Hybrid Recommendation)
+
+Dịch vụ sử dụng kết hợp 3 kỹ thuật chính:
+1.  **Collaborative Filtering (CF)**: Sử dụng thuật toán ALS (Alternating Least Squares) từ thư viện `implicit` để học từ hành vi thực tế của người dùng (view, click, booking).
+2.  **Content-Based Filtering (CBF)**: Đề xuất dựa trên thuộc tính địa điểm (giá cả, độ phổ biến) để giải quyến vấn đề người dùng mới (Cold Start).
+3.  **Natural Language Processing (NLP)**: Sử dụng `TfidfVectorizer` và `LogisticRegression` để hiểu ý định người dùng (Intent) từ câu truy vấn (query) và khớp với phong cách (styles) của địa điểm.
+
+---
+
+## 🛠️ Các API Endpoint chính
+
+| Endpoint | Method | Chức năng |
+| :--- | :--- | :--- |
+| `/predict` | `POST` | Dự đoán và xếp hạng các địa điểm gợi ý. |
+| `/train` | `POST` | Huấn luyện lại mô hình Collaborative Filtering (ALS) từ dữ liệu tương tác mới. |
+| `/train-nlp` | `POST` | Huấn luyện lại bộ phân loại ý định (NLP Intent) từ `intent_data.json`. |
+| `/health` | `GET` | Kiểm tra trạng thái hoạt động của dịch vụ. |
+
+---
+
 ## 🧠 Huấn luyện Model (Training)
 
-Nếu bạn cập nhật dữ liệu huấn luyện hoặc muốn train lại model NLP:
-
-### 1. Huấn luyện NLP Intent
-Script này sẽ xử lý file `data/intent_data.json` và tạo ra model `data/intent_pipeline.pkl`.
+### 1. Huấn luyện qua API (Khuyên dùng)
+Bạn có thể kích hoạt huấn luyện trực tiếp qua API (thay vì chạy script thủ công):
 ```bash
-python app/nlp_trainer.py
-```
+# Huấn luyện CF (ALS)
+curl -X POST http://localhost:8001/train -d '[{"user_id":1, "location_id":10, "event_type":"view"}]'
 
-### 2. Chèn dữ liệu mẫu (Massive Mock Data)
-Sử dụng script này để populate database MySQL với dữ liệu người dùng, địa điểm và tương tác thực tế (dành cho Recommendation Engine):
-```bash
-# Đứng tại thư mục gốc của project hoặc dùng đường dẫn tương đối
-python ../Database/insert_data.py 
+# Huấn luyện NLP
+curl -X POST http://localhost:8001/train-nlp
 ```
-*(Lưu ý: Bạn cần chỉnh sửa `host`, `user`, `password` trong file `insert_data.py` để khớp với MySQL của bạn).*
 
 ---
 
-## Kiểm tra system recommend
+## 🧪 Đánh giá mô hình (Evaluator)
+Để kiểm tra độ chính xác (Hit Rate, MRR) của mô hình trên dữ liệu thực tế:
+```bash
 python -m app.evaluator
-
-## 🧪 Kiểm tra API
-Bạn có thể kiểm tra tính năng gợi ý bằng `curl`:
-```bash
-curl -X POST http://localhost:8001/predict \
-     -H "Content-Type: application/json" \
-     -d '{"query": "tour biển", "top_k": 3, "participants": 2, "candidates": []}'
 ```
 
 ---
 
-## 📂 Giải thích thư mục
-- **`app/main.py`**: Điểm khởi đầu của ứng dụng FastAPI.
-- **`app/logic/`**: Chứa các thuật toán xử lý dữ liệu và tính toán điểm tương đồng (Recommendation Logic).
-- **`data/`**: Chứa dữ liệu huấn luyện hoặc cấu hình cho model.
+## 📂 Cấu trúc thư mục
+- **`app/main.py`**: Điểm khởi đầu FastAPI.
+- **`app/recommend.py`**: Trái tim của hệ thống gợi ý (Hybrid Logic).
+- **`app/nlp_utils.py`**: Các tiện ích xử lý ngôn ngữ tự nhiên.
+- **`app/schemas.py`**: Định nghĩa cấu trúc dữ liệu Pydantic.
 
----
-
-## ⚡ Các thông số đầu vào (Predict)
-Dịch vụ nhận vào:
-- `query`: Sở thích người dùng nhập vào.
-- `days`: Số ngày dự kiến.
-- `budget`: Mức ngân sách.
-- `top_k`: Số lượng kết quả muốn lấy ra.
-- `candidates`: Danh sách các tour từ database để AI đánh giá và xếp hạng.

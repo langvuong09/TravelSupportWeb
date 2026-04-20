@@ -9,6 +9,7 @@ import {
   getRecommendations,
   formatPrice,
   createTour,
+  logInteraction,
 } from "../../services/api";
 import {
   parseRecommendationProvinces,
@@ -320,6 +321,13 @@ export default function CreateTour() {
       });
 
       if (newTour && newTour.tourId) {
+        // Log "booking" interaction for each selected location
+        if (user && user.user_id && locationIds.length > 0) {
+          locationIds.forEach((lid) => {
+            logInteraction(user.user_id, lid, "booking");
+          });
+        }
+
         setShowSuccess(true);
         setTimeout(() => {
           setShowSuccess(false);

@@ -1,11 +1,18 @@
 import { Link } from "react-router-dom";
 import { Ic } from "./UI";
-import { formatPrice } from "../services/api";
+import { formatPrice, logInteraction } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function LocationCard({ location }) {
+  const { user } = useAuth();
   return (
     <Link
       to={`/locations/${location.locationId}`}
+      onClick={() => {
+        if (user && location.locationId) {
+          logInteraction(user.user_id, location.locationId, "click");
+        }
+      }}
       className="card card-hover"
       style={{ display: "block", overflow: "hidden", textDecoration: "none" }}
     >

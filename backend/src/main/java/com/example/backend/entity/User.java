@@ -31,6 +31,6 @@ public class User {
     private String phone;
     private String birthDate;
     private String role = "USER";
-    private String image;
+    private String image = "";
 
 }

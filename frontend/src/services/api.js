@@ -366,45 +366,22 @@ export const createTransport = async (transportData) => {
   }
 };
 
-// ==================== BOOKINGS ====================
-export const createBooking = async (bookingData) => {
+// ==================== INTERACTIONS ====================
+export const logInteraction = async (userId, locationId, eventType) => {
+  if (!userId || !locationId) return;
   try {
-    const res = await fetch(`${API_BASE}/api/bookings`, {
+    const res = await fetch(`${API_BASE}/api/interactions/log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify({
+        user_id: userId,
+        location_id: locationId,
+        event_type: eventType,
+      }),
     });
-    if (!res.ok) throw new Error("Failed to create booking");
     return await res.json();
   } catch (err) {
-    console.error("Error creating booking:", err);
-    return null;
-  }
-};
-
-export const getMyBookings = async (userId) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/bookings/my-bookings/${userId}`);
-    if (!res.ok) throw new Error("Failed to fetch bookings");
-    return await res.json();
-  } catch (err) {
-    console.error("Error fetching bookings:", err);
-    return [];
-  }
-};
-
-export const updateBookingStatus = async (bookingId, status) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    if (!res.ok) throw new Error("Failed to update booking status");
-    return await res.json();
-  } catch (err) {
-    console.error("Error updating booking status:", err);
-    return null;
+    console.error("Error logging interaction:", err);
   }
 };
 

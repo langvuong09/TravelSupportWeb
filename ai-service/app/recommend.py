@@ -17,6 +17,7 @@ from .schemas import (
     RecommendationItem,
     RecommendationResponse,
 )
+from .nlp_utils import extract_intents, match_style_weight
 
 # ======================
 # CONFIG
@@ -68,10 +69,21 @@ def _cf_score(user_id: int, item_id: str) -> Optional[float]:
 
 def _query_score(c: CandidateLocation, query: str) -> float:
     if not query: return 0.0
+    
+    # 1. Keyword matching (Cơ bản)
     text = f"{c.location_name} {c.province_name} {' '.join(c.styles)}".lower()
     terms = [t.strip() for t in query.lower().split() if t.strip()]
-    hits = sum(1 for term in terms if term in text)
-    return (hits / len(terms)) * 0.8 if terms else 0.0
+    keyword_hits = sum(1 for term in terms if term in text)
+    keyword_score = (keyword_hits / len(terms)) * 0.4 if terms else 0.0
+    
+    # 2. NLP Intent matching (Nâng cao)
+    try:
+        query_intents = extract_intents(query)
+        nlp_score = match_style_weight(c.styles, query_intents)
+    except Exception:
+        nlp_score = 0.0
+        
+    return min(keyword_score + nlp_score, 0.8)
 
 def _cbf_score(c: CandidateLocation, norm: np.ndarray, query: str) -> float:
     price_n, pop_n = norm

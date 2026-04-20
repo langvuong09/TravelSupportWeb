@@ -62,7 +62,7 @@ public class AuthService {
         u.setPhone(phone);
         u.setBirthDate(birthDate);
         u.setRole("USER"); // Luôn USER, không nhận từ client
-        u.setImage(image);
+        u.setImage(image != null ? image : "");
 
         return userRepository.save(u);
     }

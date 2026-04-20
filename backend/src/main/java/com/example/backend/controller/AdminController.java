@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.entity.User;
 import com.example.backend.repository.UserRepository;
+import com.example.backend.service.RecommendationService;
 import com.example.backend.dto.UpdateUserRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,35 @@ public class AdminController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RecommendationService recommendationService;
+
+    @PostMapping("/train-ai")
+    public ResponseEntity<?> trainAI() {
+        try {
+            Map<String, Object> result = recommendationService.trainAIModel();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Lỗi gửi yêu cầu huấn luyện CF: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/train-nlp")
+    public ResponseEntity<?> trainNLP() {
+        try {
+            Map<String, Object> result = recommendationService.trainNLPModel();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Lỗi gửi yêu cầu huấn luyện NLP: " + e.getMessage()
+            ));
+        }
+    }
 
     /** Lấy danh sách tất cả người dùng */
     @GetMapping("/users")

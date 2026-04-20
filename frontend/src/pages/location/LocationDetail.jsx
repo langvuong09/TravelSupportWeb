@@ -6,6 +6,7 @@ import {
   getProvinceById,
   getRecommendations,
   formatPrice,
+  logInteraction,
 } from "../../services/api";
 import { Ic, StarRating, EmptyState } from "../../components/UI";
 
@@ -30,7 +31,20 @@ export default function LocationDetail() {
       setIsLoading(false);
     };
     loadLocationData();
-  }, [id]);
+
+    // Chỉ tính là "view" nếu người dùng ở lại trang quá 5 giây
+    let timer;
+    if (user && id) {
+      timer = setTimeout(() => {
+        logInteraction(user.user_id, id, "view");
+        console.log("Recorded view after 5 seconds");
+      }, 5000);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer); // Hủy nếu người dùng thoát trước 5s
+    };
+  }, [id, user]);
 
   useEffect(() => {
     if (!location) return;
@@ -272,6 +286,15 @@ export default function LocationDetail() {
                   <Link
                     key={rec.locationId || rec.tourId}
                     to={`/locations/${rec.locationId || rec.tourId}`}
+                    onClick={() => {
+                      if (user && (rec.locationId || rec.tourId)) {
+                        logInteraction(
+                          user.user_id,
+                          rec.locationId || rec.tourId,
+                          "click",
+                        );
+                      }
+                    }}
                     style={{
                       display: "block",
                       border: "1px solid var(--border)",

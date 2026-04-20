@@ -26,6 +26,30 @@ async def predict(request: Request) -> RecommendationResponse:
     return recommend(payload)
 
 
+@app.post("/train")
+async def train(request: Request):
+    import json
+    from .recommend import train_cf
+    from .schemas import InteractionEvent
+    
+    raw = await request.body()
+    data = json.loads(raw)
+    # Nếu data là một danh sách các dict, nạp chúng thành InteractionEvent
+    events = [InteractionEvent(**e) for e in data]
+    train_cf(events)
+    return {"status": "success", "message": f"Mô hình đã được luyện với {len(events)} tương tác."}
+
+
+@app.post("/train-nlp")
+async def train_nlp():
+    from .nlp_trainer import train as train_nlp_model
+    try:
+        train_nlp_model()
+        return {"status": "success", "message": "Mô hình NLP Intent đã được huấn luyện lại thành công."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
 

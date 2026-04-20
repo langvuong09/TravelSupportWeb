@@ -1,6 +1,5 @@
 package com.example.backend.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.backend.dto.request.RecommendationRequest;
 import com.example.backend.dto.response.RecommendationItemResponse;
 import com.example.backend.dto.response.RecommendationResponse;
@@ -50,6 +49,18 @@ public class RecommendationService {
             failure.setMessage("Không gọi được ai-service: " + ex.getMessage());
             return failure;
         }
+    }
+
+    public Map<String, Object> trainAIModel() {
+        List<Map<String, Object>> events = interactionService.getAllInteractions();
+        if (events.isEmpty()) {
+            return Map.of("success", false, "message", "Không có dữ liệu tương tác để huấn luyện");
+        }
+        return aiClientService.train(events);
+    }
+
+    public Map<String, Object> trainNLPModel() {
+        return aiClientService.trainNLP();
     }
 
     private Map<String, Object> buildPredictPayload(RecommendationRequest request) {
@@ -148,16 +159,6 @@ public class RecommendationService {
         }
     }
 
-    private Integer tryParseInteger(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
 
     private Long parseLong(Object value, Long fallback) {
         if (value instanceof Number n) {

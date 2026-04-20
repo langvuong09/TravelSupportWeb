@@ -1,6 +1,7 @@
 package com.example.backend.service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,25 @@ public class AIClientService {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .timeout(Duration.ofSeconds(2))
                 .retry(2)
+                .block();
+    }
+
+    public Map<String, Object> train(List<Map<String, Object>> payload) {
+        return webClient.post()
+                .uri("/train")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .timeout(Duration.ofSeconds(10))
+                .block();
+    }
+
+    public Map<String, Object> trainNLP() {
+        return webClient.post()
+                .uri("/train-nlp")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .timeout(Duration.ofSeconds(10))
                 .block();
     }
 }
