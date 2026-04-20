@@ -23,7 +23,7 @@ public class AIScheduler {
      * - "0 0 2 * * *"     : Chạy vào 2:00 sáng mỗi ngày (Dùng cho PRODUCTION)
      * - "0 0 0 * * MON"   : Chạy vào nửa đêm mỗi thứ Hai hàng tuần
      */
-    @Scheduled(cron = "0/30 * * * * *")
+    @Scheduled(cron = "0 0 2 * * *")
     public void autoTrainAI() {
         log.info("Bắt đầu tiến trình tự động huấn luyện AI và NLP định kỳ...");
         try {
